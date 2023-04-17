@@ -9,6 +9,9 @@ uvicorn = "*"
 pydantic = {extras = ["dotenv", "email"], version = "*"}
 asyncpg = "*"
 tortoise-orm = "*"
+passlib = "*"
+python-jose = {extras = ["cryptography"], version = "*"}
+python-multipart = "*"
 
 [dev-packages]
 
