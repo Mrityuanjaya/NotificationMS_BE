@@ -3,17 +3,6 @@ from tortoise.models import Model
 from tortoise import fields
 
 
-class Role(IntEnum):
-    SystemAdmin = 1
-    Admin = 2
-
-
-class Status(IntEnum):
-    Verified = 1
-    NotVerified = 2
-    Deleted = 3
-
-
 class User(Model):
     id = fields.IntField(pk=True)
     name = fields.CharField(max_length=255)
@@ -24,6 +13,15 @@ class User(Model):
 
 
 class Admin(Model):
+    class Role(IntEnum):
+        SystemAdmin = 1
+        Admin = 2
+
+    class Status(IntEnum):
+        Verified = 1
+        NotVerified = 2
+        Deleted = 3
+
     user = fields.ForeignKeyField("models.User", related_name="users")
     application = fields.ForeignKeyField(
         "models.Application", related_name="applications"

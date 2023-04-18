@@ -4,10 +4,9 @@ from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
+
 from apps.modules.users.schemas import Admin, User
 from apps.modules.users.constants import ERROR_MESSAGES
-
-
 from apps.settings.local import settings
 
 
@@ -31,6 +30,9 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 async def get_current_user(
     token: str = Depends(oauth2_scheme),
 ):
+    """
+    function to get the current user
+    """
     try:
         payload = jwt.decode(
             token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
@@ -51,7 +53,9 @@ async def get_current_user(
 
 
 async def is_system_admin(current_user=Depends(get_current_user)):
-    print(current_user)
+    """
+    function check if the current user is System Admin or not
+    """
     admin = await Admin.filter(user_id=current_user.id).first()
     if not admin:
         raise HTTPException()

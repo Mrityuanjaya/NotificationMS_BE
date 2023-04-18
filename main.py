@@ -1,15 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from tortoise import Tortoise
-from dotenv import load_dotenv
+
 from apps.settings.local import settings
 from apps.core.db.config import connectToDatabase, disconnect
 from apps.modules.users.endpoints import router as user_router
-
 from apps.modules.applications.endpoints import router as application_router
 
-
-load_dotenv()
 app = FastAPI()
 app.add_middleware(CORSMiddleware, **settings.CORS_CONFIG)
 
