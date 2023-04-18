@@ -1,0 +1,3 @@
+ERROR_MESSAGES = {"CREDENTIAL_EXCEPTION": "Username or Password is Incorrect"}
+
+TOKEN_EXPIRY_MINUTES = 120

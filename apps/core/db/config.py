@@ -1,14 +1,9 @@
-import os
 from tortoise import Tortoise
 
 
-async def connectToDatabase():
-    await Tortoise.init(
-        db_url=os.environ["DATABASE_URL"],
-        modules={
-            "models": [
-                "apps.modules.users.schemas",
-                "apps.modules.applications.schemas",
-            ]
-        },
-    )
+async def connectToDatabase(config):
+    await Tortoise.init(config=config)
+
+
+async def disconnect():
+    await Tortoise.close_connections()
