@@ -3,11 +3,6 @@ from tortoise.models import Model
 from tortoise import fields
 
 
-class Role(IntEnum):
-    SystemAdmin = 1
-    Admin = 2
-
-
 class User(Model):
     id = fields.IntField(pk=True)
     name = fields.CharField(max_length=200)
@@ -18,6 +13,10 @@ class User(Model):
 
 
 class Admin(Model):
+    class Role(IntEnum):
+        SystemAdmin = 1
+        Admin = 2
+
     user = fields.ForeignKeyField("models.User", related_name="users", pk=True)
     hashed_password = fields.CharField(max_length=64)
     role = fields.IntEnumField(Role)
