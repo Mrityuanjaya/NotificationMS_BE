@@ -10,8 +10,6 @@ from apps.modules.users.endpoints import router as user_router
 app = FastAPI()
 app.add_middleware(CORSMiddleware, **settings.CORS_CONFIG)
 
-origins = ["*"]
-
 
 @app.on_event("startup")
 async def onStartup():
