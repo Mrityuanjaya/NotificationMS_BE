@@ -3,6 +3,7 @@ from fastapi import HTTPException, status
 from passlib.context import CryptContext
 
 from apps.modules.users.schemas import User, Admin
+from apps.modules.users.models import Login
 from apps.modules.users.constants import ERROR_MESSAGES, TOKEN_EXPIRY_MINUTES
 from apps.modules.common.auth import create_access_token
 
@@ -13,7 +14,7 @@ class UserServices:
     def verify_password(plain_password, hashed_password):
         return UserServices.pwd_context.verify(plain_password, hashed_password)
 
-    async def login(form_data):
+    async def login(form_data) -> Login:
         user = await User.filter(email=form_data.username).first()
 
         if user is None:
@@ -41,5 +42,6 @@ class UserServices:
         )
         return {
             "access_token": access_token,
+            "role": admin.role,
             "token_type": "bearer",
         }
