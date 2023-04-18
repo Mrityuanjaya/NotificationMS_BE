@@ -1,1 +1,1 @@
-SECRET_KEY_LIMIT = 60
+ERROR_MESSAGES = {"INVALID_CREDENTIALS": "Could not validate credentials"}

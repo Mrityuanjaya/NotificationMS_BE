@@ -13,8 +13,6 @@ load_dotenv()
 app = FastAPI()
 app.add_middleware(CORSMiddleware, **settings.CORS_CONFIG)
 
-origins = ["*"]
-
 
 @app.on_event("startup")
 async def onStartup():
@@ -28,6 +26,4 @@ async def onShutdown():
 
 
 app.include_router(user_router)
-
-
 app.include_router(application_router)

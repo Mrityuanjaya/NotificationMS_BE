@@ -13,7 +13,12 @@ class settings:
             "default": os.environ["DATABASE_URL"],
         },
         "apps": {
-            "models": {"models": ["apps.modules.users.schemas"]},
+            "models": {
+                "models": [
+                    "apps.modules.users.schemas",
+                    "apps.modules.applications.schemas",
+                ]
+            },
         },
     }
 
