@@ -1,5 +1,7 @@
 from datetime import timedelta
+import os
 from fastapi import HTTPException, status
+from jose import jwt
 from passlib.context import CryptContext
 
 from apps.modules.users.schemas import User, Admin
@@ -40,4 +42,23 @@ class UserCRUD:
         return {
             "access_token": access_token,
             "token_type": "bearer",
+            "role" : admin.role
         }
+    
+
+    def get_email_from_token(token: str):
+        try:
+            payload = jwt.decode(token, os.environ["SECRET_KEY"], algorithms=os.environ["ALGORITHM"])
+            email: str = payload.get("email")
+        except:
+            raise credentials_exception
+        return email
+    
+    async def get_system_admin_status(email: str):
+        user = await User.filter(email=email).first()
+        if user is None:
+            raise credentials_exception
+        admin = await Admin.filter(user_id=user.id).first()
+        if not admin:
+            raise credentials_exception
+        return admin.role == 1
