@@ -33,15 +33,7 @@ class UserServices:
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail=ERROR_MESSAGES["CREDENTIAL_EXCEPTION"],
             )
-
-        admin = await Admin.filter(user_id=user.id).first()
-        if not admin:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail=ERROR_MESSAGES["CREDENTIAL_EXCEPTION"],
-            )
-
-        if not UserServices.verify_password(form_data.password, admin.hashed_password):
+        if not UserServices.verify_password(form_data.password, user.hashed_password):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail=ERROR_MESSAGES["CREDENTIAL_EXCEPTION"],
@@ -53,7 +45,7 @@ class UserServices:
         )
         return {
             "access_token": access_token,
-            "role": admin.role,
+            "role": user.role,
             "token_type": "bearer",
         }
 
