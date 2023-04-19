@@ -1,5 +1,6 @@
 import os
 from dotenv import load_dotenv
+from fastapi_mail import ConnectionConfig
 
 load_dotenv()
 
@@ -35,3 +36,14 @@ class settings:
         "allow_methods": ["*"],
         "allow_headers": ["*"],
     }
+
+    Mail_CONFIG = ConnectionConfig(
+        MAIL_USERNAME="sahilchawla24@gmail.com",
+        MAIL_PASSWORD="sbjznenixyotzymj",
+        MAIL_FROM="random@xyz.com",
+        MAIL_PORT=465,
+        MAIL_SERVER="smtp.gmail.com",
+        USE_CREDENTIALS=True,
+        MAIL_STARTTLS=False,  # port=587
+        MAIL_SSL_TLS=True,  # port=465
+    )

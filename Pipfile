@@ -12,6 +12,7 @@ tortoise-orm = "*"
 passlib = "*"
 python-jose = {extras = ["cryptography"], version = "*"}
 python-multipart = "*"
+fastapi-mail = "*"
 
 [dev-packages]
 

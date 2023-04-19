@@ -1,11 +1,19 @@
 from datetime import timedelta
 from fastapi import HTTPException, status
+from fastapi_mail import FastMail, MessageSchema
 from passlib.context import CryptContext
 
 from apps.modules.users.schemas import User, Admin
-from apps.modules.users.models import Login
-from apps.modules.users.constants import ERROR_MESSAGES, TOKEN_EXPIRY_MINUTES
+from apps.modules.applications.schemas import Application
+from apps.modules.users.models import Login, AdminDataInput
+from apps.modules.users.constants import (
+    ERROR_MESSAGES,
+    TOKEN_EXPIRY_MINUTES,
+    PASSWORD_LENGTH,
+)
+from apps.modules.common.services import CommonServices
 from apps.modules.common.auth import create_access_token
+from apps.settings.local import settings
 
 
 class UserServices:
@@ -13,6 +21,9 @@ class UserServices:
 
     def verify_password(plain_password, hashed_password):
         return UserServices.pwd_context.verify(plain_password, hashed_password)
+
+    def get_password_hash(password):
+        return UserServices.pwd_context.hash(password)
 
     async def login(form_data) -> Login:
         user = await User.filter(email=form_data.username).first()
@@ -45,3 +56,52 @@ class UserServices:
             "role": admin.role,
             "token_type": "bearer",
         }
+
+    async def create_admin(admin_data: AdminDataInput):
+        user = await User.filter(email=admin_data.email).first()
+        application = await Application.filter(id=admin_data.application_id).first()
+
+        if not application:
+            raise HTTPException(
+                status_code=404, detail="This application doesn't exist"
+            )
+
+        if not user:
+            user = await User.create(name=admin_data.name, email=admin_data.email)
+
+        admin = await Admin.filter(user_id=user.id).first()
+        fm = FastMail(settings.Mail_CONFIG)
+        if not admin:
+            password = CommonServices.generate_unique_string(PASSWORD_LENGTH)
+            hashed_password = UserServices.get_password_hash(password)
+            await Admin.create(
+                user_id=user.id,
+                application_id=admin_data.application_id,
+                hashed_password=hashed_password,
+                role=2,
+                status=2,
+            )
+            message = MessageSchema(
+                subject="hello",
+                recipients=[admin_data.email],
+                body="you have been invited to become an admin at notificationMs and your password is "
+                + password,
+                subtype="html",
+            )
+            await fm.send_message(message)
+        else:
+            await Admin.create(
+                user_id=user.id,
+                application_id=admin_data.application_id,
+                hashed_password=admin.hashed_password,
+                role=2,
+                status=admin.status,
+            )
+        message = MessageSchema(
+            subject="hello",
+            recipients=[admin_data.email],
+            body="you have been given access to " + application.name,
+            subtype="html",
+        )
+        await fm.send_message(message)
+        return {"Admin Created Successfully"}
