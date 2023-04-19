@@ -56,7 +56,4 @@ async def is_system_admin(current_user=Depends(get_current_user)):
     """
     function check if the current user is System Admin or not
     """
-    admin = await Admin.filter(user_id=current_user.id).first()
-    if not admin:
-        raise HTTPException()
-    return admin.role == 1
+    return User.role == 1
