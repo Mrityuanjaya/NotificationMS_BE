@@ -1,7 +1,7 @@
 from datetime import timedelta
 import os
 from fastapi import HTTPException, status
-from fastapi_mail import FastMail, MessageSchema
+from fastapi_mail import MessageSchema
 from passlib.context import CryptContext
 from jinja2 import Environment, FileSystemLoader
 
@@ -61,7 +61,7 @@ class UserServices:
 
         if not application:
             raise HTTPException(
-                status_code=404, detail="This application doesn't exist"
+                status_code=404, detail=ERROR_MESSAGES["APPLICATION_NOT_EXIST"]
             )
 
         if not user:
@@ -88,7 +88,8 @@ class UserServices:
         ).first()
         if admin:
             raise HTTPException(
-                status_code=403, detail="User is already a admin of this application"
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=ERROR_MESSAGES["USER_ALREADY_ADMIN"],
             )
         if not admin:
             invitation_code = create_access_token(
@@ -121,7 +122,7 @@ class UserServices:
         ).first()
         if not admin:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Invalid Code"
+                status_code=status.HTTP_404_NOT_FOUND, detail="Invalid Invitation Code"
             )
         if admin.status == 2:
             return {"Invitation already Accepted"}
