@@ -24,6 +24,19 @@ def create_access_token(data: dict, expires_delta: timedelta) -> jwt:
     return encoded_jwt
 
 
+def decode_access_token(token: str):
+    try:
+        payload = jwt.decode(
+            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+        )
+        return payload
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=ERROR_MESSAGES["INVALID_CREDENTIALS"],
+        )
+
+
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 
@@ -33,23 +46,15 @@ async def get_current_user(
     """
     function to get the current user
     """
-    try:
-        payload = jwt.decode(
-            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
-        )
-        email: str = payload.get("email")
-        if email is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail=ERROR_MESSAGES["INVALID_CREDENTIALS"],
-            )
-        user = await User.filter(email=email).first()
-        return user
-    except JWTError:
+    payload = decode_access_token(token)
+    email: str = payload.get("email")
+    if email is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=ERROR_MESSAGES["INVALID_CREDENTIALS"],
         )
+    user = await User.filter(email=email).first()
+    return user
 
 
 async def is_system_admin(current_user=Depends(get_current_user)):

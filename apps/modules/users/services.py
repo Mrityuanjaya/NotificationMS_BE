@@ -11,10 +11,10 @@ from apps.modules.users.constants import (
     ERROR_MESSAGES,
     TOKEN_EXPIRY_MINUTES,
     PASSWORD_LENGTH,
-    INVITATION_CODE_LENGTH,
+    INVITATION_TOKEN_EXPIRES_TIME,
 )
 from apps.modules.common.services import CommonServices
-from apps.modules.common.auth import create_access_token
+from apps.modules.common.auth import create_access_token, decode_access_token
 from apps.settings.local import settings
 
 env = Environment(loader=FileSystemLoader("apps/templates/app"))
@@ -90,14 +90,14 @@ class UserServices:
                 status_code=403, detail="User is already a admin of this application"
             )
         if not admin:
-            invitation_code = CommonServices.generate_unique_string(
-                INVITATION_CODE_LENGTH
+            invitation_code = create_access_token(
+                data={"user_id": user.id, "application_id": application.id},
+                expires_delta=timedelta(INVITATION_TOKEN_EXPIRES_TIME),
             )
             await Admin.create(
                 user_id=user.id,
                 application_id=admin_data.application_id,
                 status=1,
-                invitation_code=invitation_code,
             )
             output = template.render(
                 name=admin_data.name,
@@ -114,11 +114,16 @@ class UserServices:
         return {"Admin Created Successfully"}
 
     async def update_invitation_status(invitation_code: str):
-        admin = await Admin.filter(invitation_code=invitation_code).first()
+        payload = decode_access_token(invitation_code)
+        admin = await Admin.filter(
+            user_id=payload.get("user_id"), application_id=payload.get("application_id")
+        ).first()
         if not admin:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Invalid Code"
             )
+        if admin.status == 2:
+            return {"Invitation already excepted"}
         admin.status = 2
         await admin.save()
         return {"Invitation Accepted"}
