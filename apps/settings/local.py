@@ -39,13 +39,13 @@ class settings:
     }
 
     Mail_CONFIG = ConnectionConfig(
-        MAIL_USERNAME="sahilchawla24@gmail.com",
-        MAIL_PASSWORD="sbjznenixyotzymj",
-        MAIL_FROM="random@xyz.com",
-        MAIL_PORT=465,
-        MAIL_SERVER="smtp.gmail.com",
-        USE_CREDENTIALS=True,
-        MAIL_STARTTLS=False,  # port=587
-        MAIL_SSL_TLS=True,  # port=465
+        MAIL_USERNAME = os.environ["MAIL_USERNAME"],
+        MAIL_PASSWORD = os.environ["MAIL_PASSWORD"],
+        MAIL_FROM= os.environ["MAIL_FROM"],
+        MAIL_PORT= os.environ["MAIL_PORT"],
+        MAIL_SERVER=os.environ["MAIL_SERVER"],
+        USE_CREDENTIALS=os.environ["USE_CREDENTIALS"],
+        MAIL_STARTTLS=os.environ["MAIL_STARTTLS"],
+        MAIL_SSL_TLS=os.environ["MAIL_SSL_TLS"],
     )
     SEND_MAIL = FastMail(Mail_CONFIG)

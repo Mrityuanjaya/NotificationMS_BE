@@ -33,7 +33,7 @@ def decode_access_token(token: str):
     except JWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=ERROR_MESSAGES["INVALID_CREDENTIALS"],
+            detail=ERROR_MESSAGES["INVALID_CREDENTIALS"]
         )
 
 

@@ -124,7 +124,7 @@ class UserServices:
                 status_code=status.HTTP_404_NOT_FOUND, detail="Invalid Code"
             )
         if admin.status == 2:
-            return {"Invitation already excepted"}
+            return {"Invitation already Accepted"}
         admin.status = 2
         await admin.save()
         return {"Invitation Accepted"}

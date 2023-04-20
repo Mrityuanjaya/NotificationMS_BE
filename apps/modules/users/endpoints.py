@@ -21,11 +21,12 @@ async def create_admin(admin_data: AdminDataInput):
     return await UserServices.create_admin(admin_data)
 
 
-@router.patch("/invite/{invitation_code}")
+@router.patch("/verify")
 async def update_invitation_status(invitation_code: str):
+    print(invitation_code)
     return await UserServices.update_invitation_status(invitation_code)
 
 
 @router.get("/validate_system_admin")
-async def validate_system_admin(is_system_admin:bool=Depends(is_system_admin)):
+async def validate_system_admin(is_system_admin: bool = Depends(is_system_admin)):
     return is_system_admin
