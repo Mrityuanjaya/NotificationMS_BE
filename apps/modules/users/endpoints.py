@@ -18,6 +18,6 @@ async def create_admin(admin_data: AdminDataInput):
     return await UserServices.create_admin(admin_data)
 
 
-@router.patch("/invite/{invitation_code}")
+@router.patch("/verify")
 async def update_invitation_status(invitation_code: str):
     return await UserServices.update_invitation_status(invitation_code)
