@@ -60,3 +60,4 @@ async def is_system_admin(current_user=Depends(get_current_user)):
     if not admin:
         raise HTTPException()
     return admin.role == 1
+
