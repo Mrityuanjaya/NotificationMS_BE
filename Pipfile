@@ -12,8 +12,9 @@ tortoise-orm = "*"
 passlib = "*"
 python-jose = {extras = ["cryptography"], version = "*"}
 python-multipart = "*"
-aerich = "*"
 fastapi-mail = "*"
+jinja2 = "*"
+aerich = "*"
 
 [dev-packages]
 

@@ -4,33 +4,35 @@ from tortoise import fields
 
 
 class User(Model):
-    id = fields.IntField(pk=True)
-    name = fields.CharField(max_length=255)
-    email = fields.CharField(max_length=320)
-    is_active = fields.BooleanField(default=True)
-    created_at = fields.DatetimeField(auto_now_add=True)
-    modified_at = fields.DatetimeField(auto_now=True)
-
-
-class Admin(Model):
     class Role(IntEnum):
         SystemAdmin = 1
         Admin = 2
 
+    id = fields.IntField(pk=True)
+    name = fields.CharField(max_length=255)
+    email = fields.CharField(max_length=320)
+    hashed_password = fields.CharField(max_length=64)
+    role = fields.IntEnumField(Role)
+    is_active = fields.BooleanField(default=True)
+    created_at = fields.DatetimeField(auto_now_add=True)
+    modified_at = fields.DatetimeField(auto_now=True)
+    deleted_at = fields.DatetimeField(null=True)
+    
+
+class Admin(Model):
     class Status(IntEnum):
-        Verified = 1
-        NotVerified = 2
-        Deleted = 3
+        Invited = 1
+        Accepted = 2
 
     user = fields.ForeignKeyField("models.User", related_name="users")
     application = fields.ForeignKeyField(
         "models.Application", related_name="applications"
     )
-    hashed_password = fields.CharField(max_length=64)
-    role = fields.IntEnumField(Role)
     status = fields.IntEnumField(Status)
+    invitation_code = fields.CharField(max_length=10)
     created_at = fields.DatetimeField(auto_now_add=True)
     modified_at = fields.DatetimeField(auto_now=True)
+    deleted_at = fields.DatetimeField(null=True)
 
     class Meta:
         table = "admin"

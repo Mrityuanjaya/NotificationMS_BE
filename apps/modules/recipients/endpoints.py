@@ -5,7 +5,7 @@ router = APIRouter()
 
 
 
-@router.get("/upload")
+@router.post("/upload")
 async def upload_recipients():
     with open('data.csv', 'r', encoding='utf-8-sig') as csvfile:
         reader = csv.DictReader(csvfile)
