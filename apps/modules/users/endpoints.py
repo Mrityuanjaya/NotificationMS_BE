@@ -21,7 +21,7 @@ async def create_admin(admin_data: AdminDataInput):
     return await UserServices.create_admin(admin_data)
 
 
-@router.patch("/invite")
+@router.patch("/invite/{invitation_code}")
 async def update_invitation_status(invitation_code: str):
     return await UserServices.update_invitation_status(invitation_code)
 
