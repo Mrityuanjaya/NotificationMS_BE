@@ -2,6 +2,7 @@ from datetime import timedelta
 from fastapi import HTTPException, status
 from fastapi_mail import FastMail, MessageSchema
 from passlib.context import CryptContext
+from jinja2 import Environment, FileSystemLoader
 
 from apps.modules.users.schemas import User, Admin
 from apps.modules.applications.schemas import Application
@@ -10,10 +11,14 @@ from apps.modules.users.constants import (
     ERROR_MESSAGES,
     TOKEN_EXPIRY_MINUTES,
     PASSWORD_LENGTH,
+    INVITATION_CODE_LENGTH,
 )
 from apps.modules.common.services import CommonServices
 from apps.modules.common.auth import create_access_token
 from apps.settings.local import settings
+
+env = Environment(loader=FileSystemLoader("apps/templates/app"))
+template = env.get_template("invitation.html")
 
 
 class UserServices:
@@ -59,41 +64,61 @@ class UserServices:
             )
 
         if not user:
-            user = await User.create(name=admin_data.name, email=admin_data.email)
-
-        admin = await Admin.filter(user_id=user.id).first()
-        fm = FastMail(settings.Mail_CONFIG)
-        if not admin:
             password = CommonServices.generate_unique_string(PASSWORD_LENGTH)
             hashed_password = UserServices.get_password_hash(password)
-            await Admin.create(
-                user_id=user.id,
-                application_id=admin_data.application_id,
+            user = await User.create(
+                name=admin_data.name,
+                email=admin_data.email,
                 hashed_password=hashed_password,
                 role=2,
-                status=2,
             )
             message = MessageSchema(
-                subject="hello",
+                subject="You are now an Admin",
                 recipients=[admin_data.email],
-                body="you have been invited to become an admin at notificationMs and your password is "
-                + password,
+                body="Hi {}, here is your password for NotificationMS {}".format(
+                    admin_data.name, password
+                ),
                 subtype="html",
             )
-            await fm.send_message(message)
-        else:
+            await settings.SEND_MAIL.send_message(message)
+
+        admin = await Admin.filter(
+            user_id=user.id, application_id=admin_data.application_id
+        ).first()
+        if admin:
+            raise HTTPException(
+                status_code=403, detail="User is already a admin of this application"
+            )
+        if not admin:
+            invitation_code = CommonServices.generate_unique_string(
+                INVITATION_CODE_LENGTH
+            )
             await Admin.create(
                 user_id=user.id,
                 application_id=admin_data.application_id,
-                hashed_password=admin.hashed_password,
-                role=2,
-                status=admin.status,
+                status=1,
+                invitation_code=invitation_code,
             )
-        message = MessageSchema(
-            subject="hello",
-            recipients=[admin_data.email],
-            body="you have been given access to " + application.name,
-            subtype="html",
-        )
-        await fm.send_message(message)
+            output = template.render(
+                name=admin_data.name,
+                application=application.name,
+                invitationCode=invitation_code,
+            )
+            message = MessageSchema(
+                subject="You are now an Admin",
+                recipients=[admin_data.email],
+                body=output,
+                subtype="html",
+            )
+            await settings.SEND_MAIL.send_message(message)
         return {"Admin Created Successfully"}
+
+    async def update_invitation_status(invitation_code: str):
+        admin = await Admin.filter(invitation_code=invitation_code).first()
+        if not admin:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Invalid Code"
+            )
+        admin.status = 2
+        await admin.save()
+        return {"Invitation Accepted"}

@@ -1,6 +1,6 @@
 import os
 from dotenv import load_dotenv
-from fastapi_mail import ConnectionConfig
+from fastapi_mail import ConnectionConfig, FastMail
 
 load_dotenv()
 
@@ -47,3 +47,4 @@ class settings:
         MAIL_STARTTLS=False,  # port=587
         MAIL_SSL_TLS=True,  # port=465
     )
+    SEND_MAIL = FastMail(Mail_CONFIG)

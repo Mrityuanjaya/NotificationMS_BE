@@ -16,3 +16,8 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()) -> Login:
 @router.post("/invite", dependencies=[Depends(is_system_admin)])
 async def create_admin(admin_data: AdminDataInput):
     return await UserServices.create_admin(admin_data)
+
+
+@router.patch("/invite")
+async def update_invitation_status(invitation_code: str):
+    return await UserServices.update_invitation_status(invitation_code)
