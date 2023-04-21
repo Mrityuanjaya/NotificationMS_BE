@@ -16,7 +16,7 @@ class User(common_schemas.softDelete):
     role = fields.IntEnumField(Role)
 
 
-class Admin(Model):
+class Admin(common_schemas.softDelete):
     class Status(IntEnum):
         Invited = 1
         Accepted = 2

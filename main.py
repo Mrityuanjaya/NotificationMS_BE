@@ -9,6 +9,7 @@ from apps.modules.applications.endpoints import router as application_router
 
 app = FastAPI()
 app.include_router(user_router)
+app.include_router(application_router)
 app.add_middleware(CORSMiddleware, **settings.CORS_CONFIG)
 
 
@@ -20,7 +21,3 @@ async def on_startup():
 @app.on_event("shutdown")
 async def on_shutdown():
     await db_setup.close_connection()
-
-
-app.include_router(user_router)
-app.include_router(application_router)
