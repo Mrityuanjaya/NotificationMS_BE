@@ -33,6 +33,7 @@ async def get_current_user(
     """
     function to get the current user
     """
+    print("xyz")
     try:
         payload = jwt.decode(
             token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
@@ -52,8 +53,9 @@ async def get_current_user(
         )
 
 
-async def is_system_admin(current_user=Depends(get_current_user)):
+async def is_system_admin(current_user: User = Depends(get_current_user)):
     """
     function check if the current user is System Admin or not
     """
-    return User.role == 1
+    print(current_user)
+    return current_user.role == 1
