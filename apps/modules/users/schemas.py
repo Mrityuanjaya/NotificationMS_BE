@@ -26,9 +26,6 @@ class Admin(common_schemas.softDelete):
         "models.Application", related_name="applications"
     )
     status = fields.IntEnumField(Status)
-    created_at = fields.DatetimeField(auto_now_add=True)
-    modified_at = fields.DatetimeField(auto_now=True)
-    deleted_at = fields.DatetimeField(null=True)
 
     class Meta:
         table = "admin"

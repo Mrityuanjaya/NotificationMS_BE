@@ -3,9 +3,9 @@ from fastapi import HTTPException
 from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
 from datetime import datetime, timedelta
-from jose import JWTError, jwt
+from jose import jwt
 
-from apps.modules.users.schemas import Admin, User
+from apps.modules.users.schemas import User
 from apps.modules.users.constants import ERROR_MESSAGES
 from apps.settings.local import settings
 
@@ -30,29 +30,19 @@ async def get_current_user(
     """
     function to get the current user
     """
-    print("xyz")
-    try:
-        payload = jwt.decode(
-            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
-        )
-        email: str = payload.get("email")
-        if email is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail=ERROR_MESSAGES["INVALID_CREDENTIALS"],
-            )
-        user = await User.filter(email=email).first()
-        return user
-    except JWTError:
+    payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+    email: str = payload.get("email")
+    if email is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=ERROR_MESSAGES["INVALID_CREDENTIALS"],
         )
+    user = await User.filter(email=email).first()
+    return user
 
 
 async def is_system_admin(current_user: User = Depends(get_current_user)):
     """
     function check if the current user is System Admin or not
     """
-    print(current_user)
     return current_user.role == 1
