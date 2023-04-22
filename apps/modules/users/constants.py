@@ -1,6 +1,6 @@
 ERROR_MESSAGES = {
     "CREDENTIAL_EXCEPTION": "Username or Password is Incorrect",
-    "USER_ALREADY_ADMIN": "User is already a admin of this application",
+    "USER_ALREADY_ADMIN": "User is already an admin of this application",
     "APPLICATION_NOT_EXIST": "This application doesn't exist",
 }
 

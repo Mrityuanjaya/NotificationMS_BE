@@ -5,7 +5,7 @@ from fastapi import HTTPException, status
 from apps.modules.applications import schemas as application_schema
 from apps.modules.applications import models as application_model
 from apps.modules.applications import constants as application_constants
-from apps.modules.common import services as CommonServices
+from apps.modules.common import services as common_services
 
 
 class ApplicationServices:
@@ -17,7 +17,7 @@ class ApplicationServices:
         """
         new_application = await application_schema.Application.create(
             name=application_name.name,
-            access_key=CommonServices.generate_unique_string(
+            access_key=common_services.CommonServices.generate_unique_string(
                 application_constants.SECRET_KEY_LIMIT
             ),
         )
