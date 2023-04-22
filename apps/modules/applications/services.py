@@ -1,4 +1,3 @@
-import secrets, string
 from typing import List
 
 from fastapi import HTTPException, status
@@ -28,7 +27,9 @@ class ApplicationServices:
         """
         new_application = await application_schema.Application.create(
             name=application_name.name,
-            access_key=generate_access_key(),
+            access_key=CommonServices.generate_unique_string(
+                application_constants.SECRET_KEY_LIMIT
+            ),
         )
 
         if new_application is None:

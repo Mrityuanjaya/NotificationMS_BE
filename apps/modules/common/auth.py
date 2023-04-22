@@ -3,10 +3,10 @@ from fastapi import HTTPException
 from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
 from datetime import datetime, timedelta
-from jose import jwt
+from jose import JWTError, jwt, ExpiredSignatureError
 
-from apps.modules.users.schemas import User
-from apps.modules.users.constants import ERROR_MESSAGES
+from apps.modules.users import schemas as user_schemas
+from apps.modules.common import constants as common_constants
 from apps.settings.local import settings
 
 
@@ -21,6 +21,24 @@ def create_access_token(data: dict, expires_delta: timedelta) -> jwt:
     return encoded_jwt
 
 
+def decode_access_token(token: str):
+    try:
+        payload = jwt.decode(
+            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+        )
+        return payload
+    except ExpiredSignatureError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=common_constants.ERROR_MESSAGES["TOKEN_EXPIRED"],
+        )
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=common_constants.ERROR_MESSAGES["INVALID_CREDENTIALS"],
+        )
+
+
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 
@@ -30,18 +48,18 @@ async def get_current_user(
     """
     function to get the current user
     """
-    payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+    payload = decode_access_token(token)
     email: str = payload.get("email")
     if email is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=ERROR_MESSAGES["INVALID_CREDENTIALS"],
+            detail=common_constants.ERROR_MESSAGES["INVALID_CREDENTIALS"],
         )
-    user = await User.filter(email=email).first()
+    user = await user_schemas.User.filter(email=email).first()
     return user
 
 
-async def is_system_admin(current_user: User = Depends(get_current_user)):
+async def is_system_admin(current_user: user_schemas.User = Depends(get_current_user)):
     """
     function check if the current user is System Admin or not
     """

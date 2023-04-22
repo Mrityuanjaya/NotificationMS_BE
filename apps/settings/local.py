@@ -1,5 +1,6 @@
 import os
 from dotenv import load_dotenv
+from fastapi_mail import ConnectionConfig, FastMail
 
 load_dotenv()
 
@@ -35,3 +36,15 @@ class settings:
         "allow_methods": ["*"],
         "allow_headers": ["*"],
     }
+
+    Mail_CONFIG = ConnectionConfig(
+        MAIL_USERNAME=os.environ["MAIL_USERNAME"],
+        MAIL_PASSWORD=os.environ["MAIL_PASSWORD"],
+        MAIL_FROM=os.environ["MAIL_FROM"],
+        MAIL_PORT=os.environ["MAIL_PORT"],
+        MAIL_SERVER=os.environ["MAIL_SERVER"],
+        USE_CREDENTIALS=os.environ["USE_CREDENTIALS"],
+        MAIL_STARTTLS=os.environ["MAIL_STARTTLS"],
+        MAIL_SSL_TLS=os.environ["MAIL_SSL_TLS"],
+    )
+    SEND_MAIL = FastMail(Mail_CONFIG)
