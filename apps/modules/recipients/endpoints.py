@@ -1,15 +1,43 @@
-from fastapi import APIRouter
-from apps.modules.recipients.schemas import Recipient
-import csv
+from fastapi import APIRouter, HTTPException, status, UploadFile, File
+from apps.modules.recipients import (
+    services as recipient_services,
+    schemas as recipient_schemas,
+)
+
 router = APIRouter()
 
 
-
-@router.post("/upload")
-async def upload_recipients():
-    with open('data.csv', 'r', encoding='utf-8-sig') as csvfile:
-        reader = csv.DictReader(csvfile)
-        recipient_instances = [Recipient(**record) for record in reader]
-        await Recipient.bulk_create(recipient_instances)
-
-# Insert data into database
+@router.post("/upload/recipients")
+async def upload_recipients(csv_file: UploadFile = File(..., media_type="text/csv")):
+    records = await recipient_services.RecipientServices.get_records_from_csv(csv_file)
+    try:
+        recipient_instances = await recipient_schemas.Recipient.bulk_create(
+            [
+                recipient_schemas.Recipient(
+                    **dict(zip(["application_id", "email"], line))
+                )
+                for line in records
+            ]
+        )
+        await recipient_schemas.Device.bulk_create(
+            [
+                recipient_schemas.Device(
+                    **dict(
+                        zip(
+                            ["recipient_id", "token", "token_type"],
+                            [
+                                recipient_instances[i].id,
+                                records[i][2],
+                                int(records[i][3]),
+                            ],
+                        )
+                    )
+                )
+                for i in range(len(records))
+            ]
+        )
+    except:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Unprocessable Entity",
+        )

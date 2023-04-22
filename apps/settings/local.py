@@ -13,7 +13,8 @@ DATABASE_CONFIG = {
         "models": {
             "models": [
                 "apps.modules.users.schemas",
-                "apps.modules.applications.schemas"
+                "apps.modules.applications.schemas",
+                "apps.modules.recipients.schemas"
             ]
         },
     },
@@ -25,12 +26,8 @@ class settings:
     ALGORITHM = os.environ["ALGORITHM"]
 
     # middlewares configuration
-    ALLOWED_ORIGINS: list[str] = [
-        "127.0.0.1",
-        "0.0.0.0",
-        "localhost",
-        "http://localhost:5173",
-    ]
+    CORS_ORIGIN_REGEX_WHITELIST: str = r'^(http?:\/\/)?([a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9]\.)?localhost:[0-9]+$';
+    
     CORS_CONFIG = {
         "allow_origins": ["*"],
         "allow_credentials": True,

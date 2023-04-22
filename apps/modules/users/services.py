@@ -1,5 +1,4 @@
 from datetime import timedelta
-import os
 from fastapi import HTTPException, status
 from fastapi_mail import MessageSchema
 from passlib.context import CryptContext
@@ -45,7 +44,7 @@ class UserServices:
                 detail=ERROR_MESSAGES["CREDENTIAL_EXCEPTION"],
             )
 
-        access_token_expires = timedelta(TOKEN_EXPIRY_MINUTES)
+        access_token_expires = timedelta(minutes=TOKEN_EXPIRY_MINUTES)
         access_token = create_access_token(
             data={"email": user.email}, expires_delta=access_token_expires
         )

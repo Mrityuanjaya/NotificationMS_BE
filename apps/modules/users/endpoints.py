@@ -1,8 +1,6 @@
-from typing import Annotated
-from fastapi import APIRouter, Depends, Header
+from fastapi import APIRouter, Depends
 from fastapi.security import OAuth2PasswordRequestForm
-from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
-from apps.modules.common.auth import is_system_admin
+from apps.modules.common.auth import get_current_user, is_system_admin
 
 from apps.modules.common.auth import is_system_admin
 from apps.modules.users.services import UserServices
@@ -23,10 +21,14 @@ async def create_admin(admin_data: AdminDataInput):
 
 @router.patch("/verify")
 async def update_invitation_status(invitation_code: str):
-    print(invitation_code)
     return await UserServices.update_invitation_status(invitation_code)
 
 
-@router.get("/validate_system_admin")
-async def validate_system_admin(is_system_admin: bool = Depends(is_system_admin)):
-    return is_system_admin
+@router.get("/validate_user")
+async def validate_user(current_user: bool = Depends(get_current_user)):
+    if current_user == None: 
+        return {"loginStatus":False, "systemAdminStatus": False}
+    if current_user.role == 1:
+        return {"loginStatus": True, "systemAdminStatus": True}
+    return {"loginStatus": True, "systemAdminStatus": False}
+    

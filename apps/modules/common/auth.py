@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from jose import JWTError, jwt
 
 from apps.modules.users.schemas import Admin, User
-from apps.modules.users.constants import ERROR_MESSAGES
+from apps.modules.common.constants import ERROR_MESSAGES
 from apps.settings.local import settings
 
 
@@ -33,7 +33,7 @@ def decode_access_token(token: str):
     except JWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=ERROR_MESSAGES["INVALID_CREDENTIALS"]
+            detail=ERROR_MESSAGES["INVALID_CREDENTIALS"],
         )
 
 
@@ -59,7 +59,6 @@ async def get_current_user(
 
 async def is_system_admin(current_user=Depends(get_current_user)):
     """
-    function check if the current user is System Admin or not
+    function to check if the current user is System Admin or not
     """
     return current_user.role == 1
-
