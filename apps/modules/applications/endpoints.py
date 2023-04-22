@@ -1,21 +1,35 @@
+from typing import List
+
 from fastapi import APIRouter
 from fastapi import status, Depends
 
-from apps.modules.common.auth import is_system_admin
-from apps.modules.applications.services import ApplicationServices
-from apps.modules.applications.models import ApplicationInput, ApplicationOutput
+from apps.modules.common import auth
+from apps.modules.applications import services as application_services
+from apps.modules.applications import models as application_models
 
 
 router = APIRouter()
 
 
 @router.post(
-    "/application/",
+    "/applications",
     status_code=status.HTTP_201_CREATED,
-    response_model=ApplicationOutput,
-    dependencies=[Depends(is_system_admin)],
+    response_model=application_models.ApplicationOutput,
+    dependencies=[Depends(auth.is_system_admin)],
 )
 async def create_application(
-    application_name: ApplicationInput,
+    application_name: application_models.ApplicationInput,
 ):
-    return await ApplicationServices.create_application(application_name)
+    return await application_services.ApplicationServices.create_application(
+        application_name
+    )
+
+
+@router.get(
+    "/applications",
+    status_code=status.HTTP_200_OK,
+    response_model=List[application_models.Application],
+    dependencies=[Depends(auth.is_system_admin)],
+)
+async def get_application_list():
+    return await application_services.ApplicationServices.get_application_list()

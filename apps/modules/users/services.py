@@ -2,11 +2,10 @@ from datetime import timedelta
 from fastapi import HTTPException, status
 from fastapi_mail import MessageSchema
 from passlib.context import CryptContext
+from pydantic import EmailStr
+from apps.modules.users import schemas as user_schemas, models as user_models
 from jinja2 import Environment, FileSystemLoader
 
-from apps.modules.users.schemas import User, Admin
-from apps.modules.applications.schemas import Application
-from apps.modules.users.models import Login, AdminDataInput
 from apps.modules.users.constants import (
     ERROR_MESSAGES,
     TOKEN_EXPIRY_MINUTES,
@@ -16,7 +15,7 @@ from apps.modules.users.constants import (
 from apps.modules.common.services import CommonServices
 from apps.modules.common.auth import create_access_token, decode_access_token
 from apps.settings.local import settings
-
+from apps.modules.applications import models as application_models, schemas as application_schemas
 env = Environment(loader=FileSystemLoader("apps/templates/app"))
 template = env.get_template("invitation.html")
 
@@ -29,34 +28,14 @@ class UserServices:
 
     def get_password_hash(password):
         return UserServices.pwd_context.hash(password)
+    
+    async def get_user_by_email(email) -> user_schemas.User:
+        user = await user_schemas.User.filter(email=email).first()
+        return user
 
-    async def login(form_data) -> Login:
-        user = await User.filter(email=form_data.username).first()
-
-        if user is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail=ERROR_MESSAGES["CREDENTIAL_EXCEPTION"],
-            )
-        if not UserServices.verify_password(form_data.password, user.hashed_password):
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail=ERROR_MESSAGES["CREDENTIAL_EXCEPTION"],
-            )
-
-        access_token_expires = timedelta(minutes=TOKEN_EXPIRY_MINUTES)
-        access_token = create_access_token(
-            data={"email": user.email}, expires_delta=access_token_expires
-        )
-        return {
-            "access_token": access_token,
-            "role": user.role,
-            "token_type": "bearer",
-        }
-
-    async def create_admin(admin_data: AdminDataInput):
-        user = await User.filter(email=admin_data.email).first()
-        application = await Application.filter(id=admin_data.application_id).first()
+    async def create_admin(admin_data: user_models.AdminDataInput):
+        user = await user_schemas.User.filter(email=admin_data.email).first()
+        application = await application_schemas.Application.filter(id=admin_data.application_id).first()
 
         if not application:
             raise HTTPException(
@@ -66,7 +45,7 @@ class UserServices:
         if not user:
             password = CommonServices.generate_unique_string(PASSWORD_LENGTH)
             hashed_password = UserServices.get_password_hash(password)
-            user = await User.create(
+            user = await user_schemas.User.create(
                 name=admin_data.name,
                 email=admin_data.email,
                 hashed_password=hashed_password,
@@ -82,7 +61,7 @@ class UserServices:
             )
             await settings.SEND_MAIL.send_message(message)
 
-        admin = await Admin.filter(
+        admin = await user_schemas.Admin.filter(
             user_id=user.id, application_id=admin_data.application_id
         ).first()
         if admin:
@@ -95,7 +74,7 @@ class UserServices:
                 data={"user_id": user.id, "application_id": application.id},
                 expires_delta=timedelta(INVITATION_TOKEN_EXPIRES_TIME),
             )
-            await Admin.create(
+            await user_schemas.Admin.create(
                 user_id=user.id,
                 application_id=admin_data.application_id,
                 status=1,
@@ -116,7 +95,7 @@ class UserServices:
 
     async def update_invitation_status(invitation_code: str):
         payload = decode_access_token(invitation_code)
-        admin = await Admin.filter(
+        admin = await user_schemas.Admin.filter(
             user_id=payload.get("user_id"), application_id=payload.get("application_id")
         ).first()
         if not admin:

@@ -1,9 +1,11 @@
+import asyncio
+
 from tortoise import Tortoise
 
 
-async def connectToDatabase(config):
-    await Tortoise.init(config=config)
+async def setup(config):
+    await asyncio.gather(Tortoise.init(config=config), Tortoise.generate_schemas())
 
 
-async def disconnect():
+async def close_connection():
     await Tortoise.close_connections()

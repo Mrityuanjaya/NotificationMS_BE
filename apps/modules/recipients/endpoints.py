@@ -1,4 +1,6 @@
-from fastapi import APIRouter, HTTPException, status, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
+from apps.modules.common import auth
+from apps.modules.users import schemas as user_schemas
 from apps.modules.recipients import (
     services as recipient_services,
     schemas as recipient_schemas,
@@ -7,7 +9,9 @@ from apps.modules.recipients import (
 router = APIRouter()
 
 
-@router.post("/upload/recipients")
+
+
+@router.post("/upload/recipients", dependencies=[Depends(auth.is_system_admin)])
 async def upload_recipients(csv_file: UploadFile = File(..., media_type="text/csv")):
     records = await recipient_services.RecipientServices.get_records_from_csv(csv_file)
     try:
