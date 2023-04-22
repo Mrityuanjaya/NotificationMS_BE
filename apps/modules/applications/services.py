@@ -5,17 +5,7 @@ from fastapi import HTTPException, status
 from apps.modules.applications import schemas as application_schema
 from apps.modules.applications import models as application_model
 from apps.modules.applications import constants as application_constants
-
-
-def generate_access_key():
-    """
-    function to generate the access_key for Application
-    """
-    res = "".join(
-        secrets.choice(string.ascii_letters + string.digits)
-        for i in range(application_constants.SECRET_KEY_LIMIT)
-    )
-    return str(res)
+from apps.modules.common import services as CommonServices
 
 
 class ApplicationServices:

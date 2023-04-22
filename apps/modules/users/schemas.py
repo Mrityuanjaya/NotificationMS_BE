@@ -21,10 +21,8 @@ class Admin(common_schemas.softDelete):
         Invited = 1
         Accepted = 2
 
-    user = fields.ForeignKeyField("models.User", related_name="users")
-    application = fields.ForeignKeyField(
-        "models.Application", related_name="applications"
-    )
+    user = fields.ForeignKeyField("models.User", related_name="admins")
+    application = fields.ForeignKeyField("models.Application", related_name="admins")
     status = fields.IntEnumField(Status)
 
     class Meta:
