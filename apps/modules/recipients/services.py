@@ -1,21 +1,36 @@
-from fastapi import File, HTTPException, UploadFile, status
+from typing import List
+from apps.modules.recipients import schemas as recipient_schemas
 
 
 class RecipientServices:
-    async def get_records_from_csv(
-        csv_file: UploadFile = File(..., media_type="text/csv")
+    async def get_recipient_by_application_id_and_email(application_id, email):
+        """
+        function to get a recipient by its application_id and email
+        """
+        return await recipient_schemas.Recipient.get_or_none(
+            application_id=application_id, email=email
+        )
+
+    async def get_all_recipients(page_no: int = 1, records_per_page: int = 100):
+        """
+        function to get all recipients (at max 100)
+        """
+        return (
+            await recipient_schemas.Recipient.all()
+            .select_related("application")
+            .limit(records_per_page)
+            .offset(records_per_page * (page_no - 1))
+        )
+
+    async def get_recipients_by_application_ids(
+        application_ids: List[int], page_no: int = 1, records_per_page: int = 100
     ):
         """
-        function to return records from a csv file
+        function to get all recipients by their application_ids
         """
-
-        if csv_file.content_type != "text/csv":
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="This file format is not supported",
-            )
-        csv_data = await csv_file.read()
-        csv_data = csv_data.decode("utf-8-sig").splitlines()
-        records = csv_data[1:]
-        records = [line.split(",") for line in records]
-        return records
+        return (
+            await recipient_schemas.Recipient.filter(application_id__in=application_ids)
+            .select_related("application")
+            .limit(records_per_page)
+            .offset(records_per_page * (page_no - 1))
+        )
