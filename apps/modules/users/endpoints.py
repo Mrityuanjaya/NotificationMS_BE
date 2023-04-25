@@ -1,4 +1,5 @@
-from datetime import timedelta
+from typing import List
+from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi_mail import MessageSchema
@@ -133,3 +134,89 @@ async def update_invitation_status(invitation_code: str):
     admin.status = 2
     await admin.save()
     return {"Invitation Accepted"}
+
+
+@router.get(
+    "/user/{user_id}",
+    response_model=user_models.UserDataOutput,
+    dependencies=[Depends(auth.is_system_admin)],
+)
+async def get_user(user_id: int):
+    user = await UserServices.get_user_by_id(user_id)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=user_constants.USER_NOT_EXIST
+        )
+    return user
+
+
+@router.get(
+    "/admins",
+    response_model=List[user_models.AdminDataOutput],
+    dependencies=[Depends(auth.is_system_admin)],
+)
+async def get_all_admins() -> List[user_models.AdminDataOutput]:
+    admins = (
+        await user_schemas.Admin.all().prefetch_related("user", "application").all()
+    )
+    admin_data = []
+    for admin in admins:
+        admin_data.append(
+            {
+                "user_id": admin.user_id,
+                "application_id": admin.application_id,
+                "email": admin.user.email,
+                "name": admin.user.name,
+                "application_name": admin.application.name,
+                "status": str(admin.status).rsplit(".", 1)[1],
+                "is_active": "True" if admin.deleted_at == None else "False",
+            }
+        )
+    return admin_data
+
+
+@router.put("/user/{user_id}", dependencies=[Depends(auth.is_system_admin)])
+async def update_admin_detail(user_id: int, admin_data: user_models.UserDataOutput):
+    user = await UserServices.get_user_by_id(user_id)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="user not found"
+        )
+
+    user_with_email = await UserServices.get_user_by_email(admin_data.email.lower())
+    if user_with_email and (user_with_email.id != user_id):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=user_constants.USER_ALREADY_EXIST,
+        )
+
+    user.name = admin_data.name
+    user.email = admin_data.email
+    user.role = admin_data.role
+    await user.save()
+    return {"User updated Successfully"}
+
+
+@router.delete(
+    "/user/{user_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(auth.is_system_admin)],
+)
+async def delete_admin(user_id: int, application_id: int):
+    admin = await UserServices.get_admin(user_id, application_id)
+    if not admin:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="No Admin Found"
+        )
+    admin.deleted_at = datetime.utcnow()
+    await admin.save()
+    return {"admin deleted successfully"}
+
+
+@router.get("/validate_user")
+async def validate_user(current_user: bool = Depends(auth.get_current_user)):
+    if current_user == None:
+        return {"loginStatus": False, "systemAdminStatus": False}
+    if current_user.role == 1:
+        return {"loginStatus": True, "systemAdminStatus": True}
+    return {"loginStatus": True, "systemAdminStatus": False}

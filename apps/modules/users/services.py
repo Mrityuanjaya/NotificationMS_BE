@@ -17,6 +17,10 @@ class UserServices:
         user = await user_schemas.User.filter(email=email).first()
         return user
 
+    async def get_user_by_id(id) -> user_schemas.User:
+        user = await user_schemas.User.filter(id=id).first()
+        return user
+
     async def get_application_by_id(id: int) -> application_schemas.Application:
         application = await application_schemas.Application.filter(id=id).first()
         return application
