@@ -16,3 +16,5 @@ class AdminDataInput(BaseModel):
     name: str
     email: EmailStr
     application_id: int
+
+

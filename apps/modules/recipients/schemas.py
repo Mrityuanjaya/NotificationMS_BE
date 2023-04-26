@@ -19,3 +19,4 @@ class Device(Model):
     recipient = fields.ForeignKeyField("models.Recipient", related_name="devices")
     token = fields.CharField(max_length=255)
     token_type = fields.IntEnumField(enum_type=Token_type)
+

@@ -1,6 +1,6 @@
 from enum import IntEnum
 from tortoise import fields
-
+from tortoise.models import Model
 from apps.modules.common import schemas as common_schemas
 
 
@@ -30,3 +30,5 @@ class Admin(common_schemas.softDelete):
     class Meta:
         table = "admin"
         pk = ("user_id", "application_id")
+
+    

@@ -64,4 +64,4 @@ async def is_system_admin(current_user: user_schemas.User = Depends(get_current_
     function check if the current user is System Admin or not
     """
     if current_user.role != 1:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=common_constants.ERROR_MESSAGES["UNAUTHORIZED_USER"])
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=common_constants.ERROR_MESSAGES["FORBIDDEN_USER"])
