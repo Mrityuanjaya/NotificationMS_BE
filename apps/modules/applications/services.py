@@ -22,11 +22,6 @@ class ApplicationServices:
             ),
         )
 
-        if new_application is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail=application_constants.ERROR_MESSAGES["UNAUTHORIZED_USER"],
-            )
         return new_application
 
     async def get_application_list() -> List[application_schemas.Application]:
@@ -41,3 +36,14 @@ class ApplicationServices:
             )
         return application_List
     
+    async def get_application_by_id(id: int):
+        """
+        function to get application by it's id
+        """
+        return await application_schemas.Application.get_or_none(id=id) 
+    
+    async def get_active_application_by_id(id: int):
+        """
+        function to get active application by it's id
+        """
+        return await application_schemas.Application.get_or_none(id=id, deleted_at__isnull=True) 

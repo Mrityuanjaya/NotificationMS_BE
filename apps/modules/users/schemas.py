@@ -4,7 +4,7 @@ from tortoise.models import Model
 from apps.modules.common import schemas as common_schemas
 
 
-class User(common_schemas.softDelete):
+class User(common_schemas.SoftDelete):
     class Role(IntEnum):
         SystemAdmin = 1
         Admin = 2
@@ -16,7 +16,7 @@ class User(common_schemas.softDelete):
     role = fields.IntEnumField(Role)
 
 
-class Admin(common_schemas.softDelete):
+class Admin(common_schemas.SoftDelete):
     class Status(IntEnum):
         Invited = 1
         Accepted = 2

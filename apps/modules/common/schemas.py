@@ -10,7 +10,7 @@ class Base(Model):
         abstract = True
 
 
-class softDelete(Base):
+class SoftDelete(Base):
     deleted_at = fields.DatetimeField(null=True)
 
     class Meta:

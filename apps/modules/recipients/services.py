@@ -5,13 +5,6 @@ from apps.modules.recipients import (
 
 
 class RecipientServices:
-    async def get_recipient_by_application_id_and_email(application_id, email) -> recipient_schemas.Recipient|None:
-        """
-        function to get a recipient by its application_id and email
-        """
-        return await recipient_schemas.Recipient.get_or_none(
-            application_id=application_id, email=email
-        )
 
     async def get_limited_recipients(
         page_no: int = 1, records_per_page: int = 100, application_ids: List[int] = None

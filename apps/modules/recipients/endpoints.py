@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
-from apps.modules.common import auth
+from apps.modules.common import auth, constants as common_constants
 from apps.modules.common.services import CommonServices
 from apps.modules.users import schemas as user_schemas
 from apps.modules.recipients import (
@@ -20,7 +20,7 @@ async def get_recipients(
     records_per_page: int = 100,
 ):
     recipients = []
-    if current_user.role == 1:
+    if current_user.role == common_constants.SYSTEM_ADMIN_ROLE:
         response = await RecipientServices.get_limited_recipients(
             page_no=page_no, records_per_page=records_per_page
         )
@@ -28,7 +28,7 @@ async def get_recipients(
         total_recipients = response["total_recipients"]
     else:
         admin_id = current_user.id
-        application_ids = await UserServices.get_application_ids_by_admin_id(admin_id)
+        application_ids = await UserServices.get_active_application_ids_by_admin_id(admin_id)
         response = await RecipientServices.get_limited_recipients(
             page_no=page_no,
             records_per_page=records_per_page,
@@ -42,7 +42,7 @@ async def get_recipients(
                 "id": recipient_instance.id,
                 "email": recipient_instance.email,
                 "application_name": recipient_instance.application.name,
-                "created_at": recipient_instance.created_at,
+                "created_at": recipient_instance.created_at.strftime("%d %B %Y, %I:%M:%S %p"),
             }
         )
     return {"total_recipients": total_recipients, "recipients": recipients}
