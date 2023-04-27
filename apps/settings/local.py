@@ -31,7 +31,8 @@ class settings:
                     "apps.modules.users.schemas",
                     "apps.modules.applications.schemas",
                     "apps.modules.recipients.schemas",
-                    "apps.modules.channels.schemas"
+                    "apps.modules.channels.schemas",
+                    "apps.modules.notifications.schemas",
                 ]
             },
         },

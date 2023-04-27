@@ -13,6 +13,7 @@ router = APIRouter()
 
 @router.post("/channel", dependencies=[Depends(auth.is_system_admin)])
 async def create_channel(channel_data: channel_models.ChannelInput):
+    channel_data.alias = (channel_data.alias).lower()
     channel = await ChannelServices.get_channel_by_alias(channel_data.alias)
     if channel is not None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=channel_constants.CHANNEL_ALREADY_EXIST)
@@ -76,6 +77,7 @@ async def get_channel(
 
 @router.patch("/channel/{channel_alias}", dependencies=[Depends(auth.is_system_admin)])
 async def update_channel(channel_alias: str, channel_data: channel_models.ChannelUpdateInput):
+    channel_alias = channel_alias.lower()
     channel = await ChannelServices.get_active_channel_by_alias(channel_alias)
     if channel is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=channel_constants.CHANNEL_DOES_NOT_EXIST)
@@ -96,6 +98,7 @@ async def update_channel(channel_alias: str, channel_data: channel_models.Channe
 
 @router.delete("/channel/{channel_alias}", dependencies=[Depends(auth.is_system_admin)])
 async def delete_channel(channel_alias: str):
+    channel_alias = channel_alias.lower()
     channel = await ChannelServices.get_active_channel_by_alias(channel_alias)
     if channel is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=channel_constants.CHANNEL_DOES_NOT_EXIST)

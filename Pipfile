@@ -15,6 +15,7 @@ python-multipart = "*"
 fastapi-mail = "*"
 jinja2 = "*"
 aerich = "*"
+python-dateutil = "*"
 
 [dev-packages]
 
