@@ -14,6 +14,7 @@ python-jose = {extras = ["cryptography"], version = "*"}
 python-multipart = "*"
 fastapi-mail = "*"
 jinja2 = "*"
+arq = "*"
 
 [dev-packages]
 

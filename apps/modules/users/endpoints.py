@@ -14,6 +14,7 @@ from apps.modules.users import (
 )
 from apps.modules.common import auth, services as common_services
 from apps.settings.local import settings
+from apps.libs.arq import setup as arq_setup
 
 router = APIRouter()
 
@@ -79,15 +80,24 @@ async def create_admin(admin_data: user_models.AdminDataInput):
             hashed_password=hashed_password,
             role=2,
         )
-        message = MessageSchema(
-            subject="You are now an Admin",
-            recipients=[admin_data.email],
-            body="Hi {}, here is your password for NotificationMS {}".format(
+        subject = ("You are now an Admin",)
+        body = (
+            "Hi {}, here is your password for NotificationMS {}".format(
                 admin_data.name, password
             ),
-            subtype="html",
         )
-        await settings.SEND_MAIL.send_message(message)
+        await arq_setup.redis_pool.enqueue_job(
+            "send_mail", admin_data.email, subject, body
+        )
+        # message = MessageSchema(
+        #     subject="You are now an Admin",
+        #     recipients=[admin_data.email],
+        #     body="Hi {}, here is your password for NotificationMS {}".format(
+        #         admin_data.name, password
+        #     ),
+        #     subtype="html",
+        # )
+        # await settings.SEND_MAIL.send_message(message)
 
     admin = await UserServices.get_admin(user.id, admin_data.application_id)
     if admin:
@@ -109,13 +119,16 @@ async def create_admin(admin_data: user_models.AdminDataInput):
         application=application.name,
         invitationCode=invitation_code,
     )
-    message = MessageSchema(
-        subject="You are now an Admin",
-        recipients=[admin_data.email],
-        body=output,
-        subtype="html",
+    # message = MessageSchema(
+    #     subject="You are now an Admin",
+    #     recipients=[admin_data.email],
+    #     body=output,
+    #     subtype="html",
+    # )
+    # await settings.SEND_MAIL.send_message(message)
+    await arq_setup.redis_pool.enqueue_job(
+        "send_mail", admin_data.email, "You are now an Admin", output
     )
-    await settings.SEND_MAIL.send_message(message)
     return {"Admin Created Successfully"}
 
 

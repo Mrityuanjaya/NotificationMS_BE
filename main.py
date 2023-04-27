@@ -1,23 +1,34 @@
+import asyncio
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from tortoise import Tortoise
 
 from apps.settings.local import settings
 from apps.core.db import config as db_setup
 from apps.modules.users.endpoints import router as user_router
 from apps.modules.applications.endpoints import router as application_router
+from apps.modules.notifications.endpoints import router as notification_router
+from apps.libs.arq import setup as arq_setup
 
 app = FastAPI()
 app.include_router(user_router)
 app.include_router(application_router)
+app.include_router(notification_router)
 app.add_middleware(CORSMiddleware, **settings.CORS_CONFIG)
 
 
 @app.on_event("startup")
 async def on_startup():
-    await db_setup.setup(settings.DATABASE_CONFIG)
+    asyncio.gather(arq_setup.setup_arq(), db_setup.setup(settings.DATABASE_CONFIG))
 
 
 @app.on_event("shutdown")
 async def on_shutdown():
-    await db_setup.close_connection()
+    asyncio.gather(arq_setup.close_arq(), db_setup.close_connection())
+
+
+@app.get("/")
+async def check():
+    await arq_setup.redis_pool.enqueue_job(
+        "send_mail", "user@examom", "ohiowe", "feuwhf"
+    )
