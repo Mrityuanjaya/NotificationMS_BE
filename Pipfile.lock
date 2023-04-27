@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "c5042b0d7524fa50b8369d36d1d50a1f4b351a1e97c31cc6c1d0c746e8e86f50"
+            "sha256": "e874b70b5f8bed0eec36c42d735219fa3801cff91d68d7f9eedfc90693b234a5"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -16,6 +16,14 @@
         ]
     },
     "default": {
+        "aerich": {
+            "hashes": [
+                "sha256:501f6598ae51e3ce19b1bfc21ff365f582e7447e6aa5215629451c40341d6eb8",
+                "sha256:ca1c46e777c448c8344961bb591ee8cc7bfcb2fc7527bea4da43647b5fbf8fbe"
+            ],
+            "index": "pypi",
+            "version": "==0.7.1"
+        },
         "aiosmtplib": {
             "hashes": [
                 "sha256:2f619f900d1bfe25a8f453005958ba78870abbfeeffb2fdef11265be0df26913",
@@ -207,6 +215,13 @@
             ],
             "version": "==40.0.2"
         },
+        "dictdiffer": {
+            "hashes": [
+                "sha256:17bacf5fbfe613ccf1b6d512bd766e6b21fb798822a133aa86098b8ac9997578",
+                "sha256:442bfc693cfcadaf46674575d2eba1c53b42f5e404218ca2c2ff549f2df56595"
+            ],
+            "version": "==0.9.0"
+        },
         "dnspython": {
             "hashes": [
                 "sha256:224e32b03eb46be70e12ef6d64e0be123a64e621ab4c0822ff6d450d52a540b9",
@@ -241,11 +256,11 @@
         },
         "fastapi-mail": {
             "hashes": [
-                "sha256:22db99be0a842b0535d4cc01712a1677abcbb94fd11cca6bf5e8826139116b00",
-                "sha256:26acc4201551203c7aa86a91b7c022fee3fe0d08824f0924dc0004448910852b"
+                "sha256:1ea39d0b26943cb6e94d2b512cfc1295cfc5133df8d913c7db8da0f835802706",
+                "sha256:5c650ffa92ca6922f700b4001a201f52e25999aafbf3c4d0f9150126aebe2df0"
             ],
             "index": "pypi",
-            "version": "==1.2.7"
+            "version": "==1.2.8"
         },
         "h11": {
             "hashes": [
@@ -506,6 +521,14 @@
             "markers": "python_version >= '3.7' and python_version < '4.0'",
             "version": "==0.1.6"
         },
+        "python-dateutil": {
+            "hashes": [
+                "sha256:0123cacc1627ae19ddf3c27a5de5bd67ee4586fbdd6440d9748f8abb483d3e86",
+                "sha256:961d03dc3453ebbc59dbdea9e4e11c5651520a876d0f4db161e8674aae935da9"
+            ],
+            "index": "pypi",
+            "version": "==2.8.2"
+        },
         "python-dotenv": {
             "hashes": [
                 "sha256:a8df96034aae6d2d50a4ebe8216326c61c3eb64836776504fcca410e5937a3ba",
@@ -581,6 +604,14 @@
             ],
             "markers": "python_version >= '3.7'",
             "version": "==0.26.1"
+        },
+        "tomlkit": {
+            "hashes": [
+                "sha256:5325463a7da2ef0c6bbfefb62a3dc883aebe679984709aee32a317907d0a8d3c",
+                "sha256:f392ef70ad87a672f02519f99967d28a4d3047133e2d1df936511465fbb3791d"
+            ],
+            "markers": "python_version >= '3.7'",
+            "version": "==0.11.7"
         },
         "tortoise-orm": {
             "hashes": [

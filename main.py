@@ -8,11 +8,14 @@ from apps.core.db import config as db_setup
 from apps.modules.users.endpoints import router as user_router
 from apps.modules.applications.endpoints import router as application_router
 from apps.modules.notifications.endpoints import router as notification_router
+from apps.modules.recipients.endpoints import router as recipient_router
 from apps.libs.arq import setup as arq_setup
+
 
 app = FastAPI()
 app.include_router(user_router)
 app.include_router(application_router)
+app.include_router(recipient_router)
 app.include_router(notification_router)
 app.add_middleware(CORSMiddleware, **settings.CORS_CONFIG)
 
@@ -25,10 +28,3 @@ async def on_startup():
 @app.on_event("shutdown")
 async def on_shutdown():
     asyncio.gather(arq_setup.close_arq(), db_setup.close_connection())
-
-
-@app.get("/")
-async def check():
-    await arq_setup.redis_pool.enqueue_job(
-        "send_mail", "user@examom", "ohiowe", "feuwhf"
-    )

@@ -8,6 +8,18 @@ load_dotenv()
 class settings:
     SECRET_KEY = os.environ["SECRET_KEY"]
     ALGORITHM = os.environ["ALGORITHM"]
+
+    # middlewares configuration
+    CORS_ORIGIN_REGEX_WHITELIST: str = (
+        r"^(http?:\/\/)?([a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9]\.)?localhost:[0-9]+$"
+    )
+
+    CORS_CONFIG = {
+        "allow_origins": ["*"],
+        "allow_credentials": True,
+        "allow_methods": ["*"],
+        "allow_headers": ["*"],
+    }
     # database config
     DATABASE_CONFIG = {
         "connections": {
@@ -18,25 +30,12 @@ class settings:
                 "models": [
                     "apps.modules.users.schemas",
                     "apps.modules.applications.schemas",
+                    "apps.modules.recipients.schemas",
+                    "apps.modules.notifications.schemas",
                 ]
             },
         },
     }
-
-    # middlewares configuration
-    ALLOWED_ORIGINS: list[str] = [
-        "127.0.0.1",
-        "0.0.0.0",
-        "localhost",
-        "http://localhost:5173",
-    ]
-    CORS_CONFIG = {
-        "allow_origins": ALLOWED_ORIGINS,
-        "allow_credentials": True,
-        "allow_methods": ["*"],
-        "allow_headers": ["*"],
-    }
-
     Mail_CONFIG = ConnectionConfig(
         MAIL_USERNAME=os.environ["MAIL_USERNAME"],
         MAIL_PASSWORD=os.environ["MAIL_PASSWORD"],

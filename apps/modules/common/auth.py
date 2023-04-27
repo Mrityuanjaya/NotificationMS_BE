@@ -44,7 +44,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 async def get_current_user(
     token: str = Depends(oauth2_scheme),
-):
+) -> user_schemas.User:
     """
     function to get the current user
     """
@@ -63,4 +63,8 @@ async def is_system_admin(current_user: user_schemas.User = Depends(get_current_
     """
     function check if the current user is System Admin or not
     """
-    return current_user.role == 1
+    if current_user.role != 1:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=common_constants.ERROR_MESSAGES["FORBIDDEN_USER"],
+        )
