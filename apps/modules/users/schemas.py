@@ -14,6 +14,7 @@ class User(common_schemas.softDelete):
     email = fields.CharField(max_length=320)
     hashed_password = fields.CharField(max_length=64)
     role = fields.IntEnumField(Role)
+    applications = fields.ManyToManyField("models.Application", through="admin")
 
 
 class Admin(common_schemas.softDelete):

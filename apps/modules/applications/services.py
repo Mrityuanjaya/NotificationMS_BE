@@ -1,7 +1,6 @@
-from typing import List
-
 from fastapi import HTTPException, status
 
+from apps.modules.users import schemas as user_schemas
 from apps.modules.applications import schemas as application_schema
 from apps.modules.applications import models as application_model
 from apps.modules.applications import constants as application_constants
@@ -29,10 +28,29 @@ class ApplicationServices:
             )
         return new_application
 
-    async def get_application_list() -> List[application_schema.Application]:
+    async def get_application_list(current_user):
         """
-        function to get the List of Applapplication_schemaications
+        function to get the List of Applications
         """
+        if current_user.role == 2:
+            application_List = (
+                await user_schemas.Admin.filter(user_id=current_user.id)
+                .all()
+                .prefetch_related("user", "application")
+                .all()
+            )
+            if application_List is None:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=application_constants.ERROR_MESSAGES["EMPTY_LIST"],
+                )
+            applications = []
+            for app in application_List:
+                applications.append(
+                    {"id": app.application.id, "name": app.application.name}
+                )
+            return applications
+
         application_List = await application_schema.Application.all().values()
         if application_List is None:
             raise HTTPException(

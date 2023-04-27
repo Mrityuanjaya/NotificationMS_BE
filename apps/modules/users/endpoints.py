@@ -71,6 +71,7 @@ async def create_admin(admin_data: user_models.AdminDataInput):
         password = common_services.CommonServices.generate_unique_string(
             user_constants.PASSWORD_LENGTH
         )
+        print(password)
         hashed_password = UserServices.get_password_hash(password)
         user = await user_schemas.User.create(
             name=admin_data.name,
@@ -98,6 +99,7 @@ async def create_admin(admin_data: user_models.AdminDataInput):
         data={"user_id": user.id, "application_id": application.id},
         expires_delta=timedelta(minutes=user_constants.INVITATION_TOKEN_EXPIRES_TIME),
     )
+    print(invitation_code)
     await user_schemas.Admin.create(
         user_id=user.id,
         application_id=admin_data.application_id,

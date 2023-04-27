@@ -43,3 +43,13 @@ async def upload_recipients(csv_file: UploadFile = File(..., media_type="text/cs
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Unprocessable Entity",
         )
+
+
+@router.get("/recipients")
+async def count_recipients(
+    current_user: user_schemas.User = Depends(auth.get_current_user),
+    application_id: int = None,
+):
+    return await recipient_services.RecipientServices.count_recipients(
+        current_user, application_id
+    )
