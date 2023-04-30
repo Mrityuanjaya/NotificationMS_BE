@@ -16,6 +16,7 @@ fastapi-mail = "*"
 jinja2 = "*"
 aerich = "*"
 python-dateutil = "*"
+firebase-admin = "*"
 
 [dev-packages]
 

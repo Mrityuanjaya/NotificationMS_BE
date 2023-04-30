@@ -2,8 +2,7 @@ import datetime
 from dateutil.relativedelta import relativedelta
 from typing import List
 
-from fastapi import APIRouter
-from fastapi import status, Depends
+from fastapi import APIRouter, Header, status, Depends
 
 from apps.modules.common import auth
 from apps.modules.users import schemas as user_schemas
@@ -29,3 +28,16 @@ async def get_requests_list(
     return await notification_services.NotificationServices.get_requests_list(
         application_id, current_user, start_date, end_date
     )
+
+
+@router.post("/send-notifications")
+async def send_notifications(notification_request: notification_models.NotificationRequest, api_key: str|None = Header(default=None)):
+    emails = notification_request.emails
+    # priority = notification_request.priority
+    # recipients = []         # get all recipients of that application
+    # devices = []
+    # notifications_to_be_created = []
+    # for recipient in recipients:
+    #     if priority == notification_constants.LOW_PRIORITY:
+    #         recipient_devices = recipient.devices
+

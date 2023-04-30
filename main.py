@@ -1,8 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
 from apps.settings.local import settings
 from apps.core.db import config as db_setup
+from apps.libs.firebase import setup as firebase_setup
 from apps.modules.users.endpoints import router as user_router
 from apps.modules.applications.endpoints import router as application_router
 from apps.modules.recipients.endpoints import router as recipient_router
@@ -21,6 +21,7 @@ app.add_middleware(CORSMiddleware, **settings.CORS_CONFIG)
 @app.on_event("startup")
 async def on_startup():
     await db_setup.setup(settings.DATABASE_CONFIG)
+    firebase_setup.setup(settings.FIREBASE_ADMIN_SERVICE_ACCOUNT_CREDENTIALS)
 
 
 @app.on_event("shutdown")

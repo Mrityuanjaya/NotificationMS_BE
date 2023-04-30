@@ -8,7 +8,7 @@ from apps.modules.notifications import schemas as notification_schema
 from apps.modules.notifications import models as notification_models
 from apps.modules.notifications import constants as notification_constants
 from apps.modules.users import schemas as user_schemas
-
+from firebase_admin import messaging
 
 class NotificationServices:
     async def response(request_list):
@@ -87,3 +87,34 @@ class NotificationServices:
                 detail=notification_constants.ERROR_MESSAGES["EMPTY_REQUESTS"],
             )
         return await NotificationServices.response(request_list)
+
+
+    async def send_bulk_push_web_notifications_batch(token_batch, title, body):
+        batch_success_count = 0
+        batch_failure_count = 0
+        message = messaging.MulticastMessage(
+                notification=messaging.Notification(
+                    title=title,
+                    body=body,
+                ),
+                tokens=token_batch,
+            )
+        response : messaging.BatchResponse = messaging.send_multicast(message)
+        print(len(response.responses))           #-> List of SendResponse
+        for idx, single_response in enumerate(response.responses):
+            if single_response.success:
+                batch_success_count += 1
+            else:
+                print(f"Failed to send notification to {token_batch[idx]} with error: {single_response.exception}")
+                batch_failure_count += 1
+        return {'batch_success_count': batch_success_count, "batch_failure_count": batch_failure_count}
+
+    async def send_bulk_push_web_notification(tokens, title, body):
+        token_batches = [tokens[i:i+500] for i in range(0, len(tokens), 500)]
+        total_failure_count = 0
+        total_success_count = 0
+        for token_batch in token_batches:
+            response = await NotificationServices.send_bulk_push_web_notifications_batch(token_batch=token_batch, title=title, body=body)
+            total_success_count += response["batch_success_count"]
+            total_failure_count += response["batch_failure_count"]
+        return {"total success": total_success_count, "total_failure": total_failure_count}
