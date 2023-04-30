@@ -21,7 +21,7 @@ class Channel(common_schemas.SoftDelete):
 
     async def save(self, *args, **kwargs):
         if self.type == channel_constants.EMAIL_CHANNEL_TYPE:
-            allowed_keys = ["email", "password", "mail_from", "mail_port", "mail_server", "use_credentials", "mail_starttls", "mail_ssl_tls"]
+            allowed_keys = ["MAIL_USERNAME", "MAIL_PASSWORD", "MAIL_FROM", "MAIL_PORT", "MAIL_SERVER", "USE_CREDENTIALS", "MAIL_STARTTLS", "MAIL_SSL_TLS"]
         else:
             allowed_keys = ["api_key", "auth_domain", "project_id", "storage_bucket", "messaging_sender_id", "app_id", "measurement_id"]
         disallowed_keys = set(self.configuration.keys()) - set(allowed_keys)
