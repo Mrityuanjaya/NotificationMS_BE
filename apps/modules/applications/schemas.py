@@ -4,7 +4,7 @@ from tortoise import fields
 from apps.modules.common import schemas as common_schemas
 
 
-class Application(common_schemas.softDelete):
+class Application(common_schemas.SoftDelete):
     id = fields.IntField(pk=True)
     name = fields.CharField(max_length=255)
     access_key = fields.CharField(max_length=255)

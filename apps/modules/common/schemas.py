@@ -16,7 +16,7 @@ class Update(Base):
         abstract = True
 
 
-class softDelete(Update):
+class SoftDelete(Update):
     deleted_at = fields.DatetimeField(null=True)
 
     class Meta:

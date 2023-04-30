@@ -1,47 +1,66 @@
-from fastapi import File, HTTPException, UploadFile, status
-
-from apps.modules.recipients import schemas as recipient_schema
-from apps.modules.users import schemas as user_schemas
+from typing import List
+from apps.modules.recipients import (
+    schemas as recipient_schemas,
+)
 
 
 class RecipientServices:
-    async def get_records_from_csv(
-        csv_file: UploadFile = File(..., media_type="text/csv")
-    ):
+    async def get_limited_recipients(
+        page_no: int = 1, records_per_page: int = 100, application_ids: List[int] = None
+    ) -> dict[str, any]:
         """
-        function to return records from a csv file
+        function to get limited recipients (at max 100)
         """
+        if application_ids is not None:
+            return {
+                "total_recipients": await recipient_schemas.Recipient.filter(
+                    application_id__in=application_ids
+                ).count(),
+                "recipients": await recipient_schemas.Recipient.filter(
+                    application_id__in=application_ids
+                )
+                .select_related("application")
+                .limit(records_per_page)
+                .offset(records_per_page * (page_no - 1)),
+            }
+        else:
+            return {
+                "total_recipients": await recipient_schemas.Recipient.all().count(),
+                "recipients": await recipient_schemas.Recipient.all()
+                .select_related("application")
+                .limit(records_per_page)
+                .offset(records_per_page * (page_no - 1)),
+            }
 
-        if csv_file.content_type != "text/csv":
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="This file format is not supported",
+    async def get_all_recipients() -> List[recipient_schemas.Recipient]:
+        """
+        function to get all recipients
+        """
+        return await recipient_schemas.Recipient.all().select_related("application")
+
+    async def get_recipients_by_application_ids(
+        application_ids: List[int], page_no: int = 1, records_per_page: int = 100
+    ) -> List[recipient_schemas.Recipient]:
+        """
+        function to get all recipients by their application_ids
+        """
+        return (
+            await recipient_schemas.Recipient.filter(application_id__in=application_ids)
+            .select_related("application")
+            .limit(records_per_page)
+            .offset(records_per_page * (page_no - 1))
+        )
+
+    async def get_recipients_by_emails(
+        emails: List[str], application_id: int
+    ) -> List[str]:
+        """
+        returns all recepients with given emails of a particular application
+        """
+        return (
+            await recipient_schemas.Recipient.filter(
+                email__in=emails, application_id=application_id
             )
-        csv_data = await csv_file.read()
-        csv_data = csv_data.decode("utf-8-sig").splitlines()
-        records = csv_data[1:]
-        records = [line.split(",") for line in records]
-        return records
-
-    async def count_recipients(
-        current_user: user_schemas.User, application_id: int = None
-    ):
-        """"""
-        if application_id == 0 and current_user.role == 1:
-            count = await recipient_schema.Recipient.all().count()
-            return count
-
-        elif application_id == 0 and current_user.role == 2:
-            application_list = (
-                await user_schemas.Admin.filter(user_id=current_user.id)
-                .all()
-                .prefetch_related("user", "application")
-                .all()
-            )
-            count = await recipient_schema.Recipient.filter(
-                id=application_list[0].id
-            ).count()
-            return count
-
-        count = await recipient_schema.Recipient.filter(id=application_id).count()
-        return count
+            .all()
+            .values("id", "email")
+        )

@@ -13,8 +13,7 @@ class Request(common_schemas.Base):
     id = fields.UUIDField(pk=True)
     application = fields.ForeignKeyField("models.Application", related_name="requests")
     body = fields.JSONField()
-    template = fields.CharField(max_length=255)
-    total_request = fields.IntField()
+    total_recipients = fields.IntField()
     priority = fields.IntEnumField(Priority)
     response = fields.JSONField()
 

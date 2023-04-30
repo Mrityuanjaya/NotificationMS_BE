@@ -18,8 +18,8 @@ from apps.libs.arq import setup as arq_setup
 
 router = APIRouter()
 
-env = Environment(loader=FileSystemLoader("apps/templates/app"))
-template = env.get_template("invitation.html")
+# env = Environment(loader=FileSystemLoader("apps/templates/app"))
+# template = env.get_template("invitation.html")
 
 
 @router.post("/login", response_model=user_models.Login)
@@ -73,7 +73,6 @@ async def create_admin(admin_data: user_models.AdminDataInput):
         password = common_services.CommonServices.generate_unique_string(
             user_constants.PASSWORD_LENGTH
         )
-        print(password)
         hashed_password = UserServices.get_password_hash(password)
         user = await user_schemas.User.create(
             name=admin_data.name,

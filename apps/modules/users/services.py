@@ -38,3 +38,10 @@ class UserServices:
         if not admin:
             return False
         return True
+
+    async def get_active_application_ids_by_admin_id(admin_id: int):
+        admin_instances = await user_schemas.Admin.filter(user_id=admin_id, deleted_at__isnull=True).values("application_id")
+        application_ids = []
+        for admin_instance in admin_instances:
+            application_ids.append(admin_instance["application_id"])
+        return application_ids

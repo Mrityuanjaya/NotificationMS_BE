@@ -1,28 +1,16 @@
 import asyncio
-from arq import create_pool, Worker, jobs
+
+from arq import create_pool
 from arq.connections import RedisSettings
 
-from apps.libs.arq.worker import send_mail
-
-
-async def end_job(ctx):
-    id = ctx["job_id"]
-    job = jobs.Job(id, ctx["redis"])
-    job_data = await job.result_info()
-    # print(job_data)
-
-
-worker = Worker(functions=[send_mail], after_job_end=end_job)
+from apps.libs import arq
+from apps.libs.arq import worker
 
 
 async def setup_arq():
-    global redis_pool
-    redis_pool = await create_pool(RedisSettings())
-    await worker.main()
+    arq.redis_pool = await create_pool(RedisSettings())
+    await worker.worker.main()
 
 
 async def close_arq():
-    try:
-        await asyncio.gather(worker.close(), redis_pool.close())
-    except asyncio.CancelledError:
-        pass
+    asyncio.gather(arq.redis_pool.close(), worker.close())
