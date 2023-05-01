@@ -2,9 +2,7 @@ from typing import List
 from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi_mail import MessageSchema
 from fastapi.security import OAuth2PasswordRequestForm
-from jinja2 import Environment, FileSystemLoader
 
 from apps.modules.users.services import UserServices
 from apps.modules.users import (
@@ -12,14 +10,12 @@ from apps.modules.users import (
     constants as user_constants,
     schemas as user_schemas,
 )
+from apps.modules.channels import services as channel_services
 from apps.modules.common import auth, services as common_services
-from apps.settings.local import settings
-from apps.libs.arq import setup as arq_setup
+from apps.modules.jinja import setup as jinja_setup
+from apps.libs import arq
 
 router = APIRouter()
-
-# env = Environment(loader=FileSystemLoader("apps/templates/app"))
-# template = env.get_template("invitation.html")
 
 
 @router.post("/login", response_model=user_models.Login)
@@ -68,11 +64,15 @@ async def create_admin(admin_data: user_models.AdminDataInput):
             status_code=404,
             detail=user_constants.ERROR_MESSAGES["APPLICATION_NOT_EXIST"],
         )
-
+    system_channel = await channel_services.ChannelServices.get_channel_by_alias(
+        "system channel"
+    )
+    email_conf = system_channel.configuration
     if not user:
         password = common_services.CommonServices.generate_unique_string(
             user_constants.PASSWORD_LENGTH
         )
+        print(password)
         hashed_password = UserServices.get_password_hash(password)
         user = await user_schemas.User.create(
             name=admin_data.name,
@@ -80,24 +80,15 @@ async def create_admin(admin_data: user_models.AdminDataInput):
             hashed_password=hashed_password,
             role=2,
         )
-        subject = ("You are now an Admin",)
+        subject = "You are now an Admin"
         body = (
             "Hi {}, here is your password for NotificationMS {}".format(
                 admin_data.name, password
             ),
         )
-        await arq_setup.redis_pool.enqueue_job(
-            "send_mail", admin_data.email, subject, body
+        await arq.pool_redis.enqueue_job(
+            "send_invitation", email_conf, admin_data.email, subject, body
         )
-        # message = MessageSchema(
-        #     subject="You are now an Admin",
-        #     recipients=[admin_data.email],
-        #     body="Hi {}, here is your password for NotificationMS {}".format(
-        #         admin_data.name, password
-        #     ),
-        #     subtype="html",
-        # )
-        # await settings.SEND_MAIL.send_message(message)
 
     admin = await UserServices.get_admin(user.id, admin_data.application_id)
     if admin:
@@ -115,20 +106,14 @@ async def create_admin(admin_data: user_models.AdminDataInput):
         application_id=admin_data.application_id,
         status=1,
     )
-    output = template.render(
-        name=admin_data.name,
-        application=application.name,
-        invitationCode=invitation_code,
-    )
-    # message = MessageSchema(
-    #     subject="You are now an Admin",
-    #     recipients=[admin_data.email],
-    #     body=output,
-    #     subtype="html",
-    # )
-    # await settings.SEND_MAIL.send_message(message)
-    await arq_setup.redis_pool.enqueue_job(
-        "send_mail", admin_data.email, "You are now an Admin", output
+    template_data = {
+        "name": admin_data.name,
+        "application": application.name,
+        "invitationCode": invitation_code,
+    }
+    body = jinja_setup.find_template("app", "invitation", template_data)
+    await arq.pool_redis.enqueue_job(
+        "send_invitation", email_conf, admin_data.email, "You are now an Admin", body
     )
     return {"Admin Created Successfully"}
 

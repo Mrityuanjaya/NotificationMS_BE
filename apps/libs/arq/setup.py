@@ -8,9 +8,9 @@ from apps.libs.arq import worker
 
 
 async def setup_arq():
-    arq.redis_pool = await create_pool(RedisSettings())
+    arq.pool_redis = await create_pool(RedisSettings())
     await worker.worker.main()
 
 
 async def close_arq():
-    asyncio.gather(arq.redis_pool.close(), worker.close())
+    asyncio.gather(arq.pool_redis.close(), worker.worker.close())

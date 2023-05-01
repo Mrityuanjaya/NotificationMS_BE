@@ -23,7 +23,6 @@ class NotificationServices:
         output["total_success"] = success
         output["total_failure"] = failure
         output["response"] = request_list
-
         return output
 
     async def get_requests_list(
@@ -36,7 +35,6 @@ class NotificationServices:
         """
         function to get the List of Requests
         """
-        print(start_date, "  ", end_date)
         if application_id == 0 and current_user.role == 1:
             request_list = (
                 await notification_schema.Request.filter(
@@ -45,11 +43,11 @@ class NotificationServices:
                 .all()
                 .values()
             )
-            if not request_list:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=notification_constants.ERROR_MESSAGES["EMPTY_REQUESTS"],
-                )
+            # if not request_list:
+            #     raise HTTPException(
+            #         status_code=status.HTTP_400_BAD_REQUEST,
+            #         detail=notification_constants.ERROR_MESSAGES["EMPTY_REQUESTS"],
+            #     )
 
             return await NotificationServices.response(request_list)
 
@@ -68,11 +66,11 @@ class NotificationServices:
                 .all()
                 .values()
             )
-            if not request_list:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=notification_constants.ERROR_MESSAGES["EMPTY_REQUESTS"],
-                )
+            # if not request_list:
+            #     raise HTTPException(
+            #         status_code=status.HTTP_400_BAD_REQUEST,
+            #         detail=notification_constants.ERROR_MESSAGES["EMPTY_REQUESTS"],
+            #     )
 
             return await NotificationServices.response(request_list)
         request_list = (
@@ -82,11 +80,11 @@ class NotificationServices:
             .all()
             .values()
         )
-        if not request_list:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=notification_constants.ERROR_MESSAGES["EMPTY_REQUESTS"],
-            )
+        # if not request_list:
+        # raise HTTPException(
+        #     status_code=status.HTTP_400_BAD_REQUEST,
+        #     detail=notification_constants.ERROR_MESSAGES["EMPTY_REQUESTS"],
+        # )
         return await NotificationServices.response(request_list)
 
     async def update_status(request_id, recipient_id):

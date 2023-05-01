@@ -82,7 +82,7 @@ async def send_notifications(
         application.id
     )
     for recipient in recipients:
-        await arq.redis_pool.enqueue_job(
+        await arq.pool_redis.enqueue_job(
             "send_mail",
             email_conf["configuration"],
             recipient["email"],
