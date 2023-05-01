@@ -1,5 +1,8 @@
 from typing import List
-from apps.modules.channels import schemas as channel_schemas, constants as channel_constants
+from apps.modules.channels import (
+    schemas as channel_schemas,
+    constants as channel_constants,
+)
 
 
 class ChannelServices:
@@ -8,6 +11,16 @@ class ChannelServices:
     ) -> dict[str, any]:
         """
         function to get limited channels (at max 100)
+
+        Args:
+        page_no: page_no for offset
+        records_per_page: number of records displayed per page
+        application_ids: IDs of applications whose channels are needed
+
+        Returns:
+        A dictionary with total number of channels as well as channel instances
+        according to the page_no and records_per_page
+        {"total_channel": , "channels": }
         """
         if application_ids is not None:
             return {
@@ -51,7 +64,9 @@ class ChannelServices:
         function to get active email channel of a particular application
         """
         return (
-            await channel_schemas.Channel.filter(application_id=application_id, type=channel_constants.EMAIL_CHANNEL_TYPE)
+            await channel_schemas.Channel.filter(
+                application_id=application_id, type=channel_constants.EMAIL_CHANNEL_TYPE
+            )
             .first()
             .values("configuration")
         )
