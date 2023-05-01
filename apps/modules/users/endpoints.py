@@ -1,4 +1,5 @@
-from datetime import timedelta
+from typing import List
+from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi_mail import MessageSchema
@@ -13,11 +14,9 @@ from apps.modules.users import (
 )
 from apps.modules.common import auth, services as common_services
 from apps.settings.local import settings
+from apps.libs.arq import setup as arq_setup
 
-router = APIRouter()
-
-env = Environment(loader=FileSystemLoader("apps/templates/app"))
-template = env.get_template("invitation.html")
+router = APIRouter(tags=["users"])
 
 
 @router.post("/login", response_model=user_models.Login)
@@ -71,7 +70,6 @@ async def create_admin(admin_data: user_models.AdminDataInput):
         password = common_services.CommonServices.generate_unique_string(
             user_constants.PASSWORD_LENGTH
         )
-        print(password)
         hashed_password = UserServices.get_password_hash(password)
         user = await user_schemas.User.create(
             name=admin_data.name,
@@ -79,15 +77,24 @@ async def create_admin(admin_data: user_models.AdminDataInput):
             hashed_password=hashed_password,
             role=2,
         )
-        message = MessageSchema(
-            subject="You are now an Admin",
-            recipients=[admin_data.email],
-            body="Hi {}, here is your password for NotificationMS {}".format(
+        subject = ("You are now an Admin",)
+        body = (
+            "Hi {}, here is your password for NotificationMS {}".format(
                 admin_data.name, password
             ),
-            subtype="html",
         )
-        await settings.SEND_MAIL.send_message(message)
+        await arq_setup.redis_pool.enqueue_job(
+            "send_mail", admin_data.email, subject, body
+        )
+        # message = MessageSchema(
+        #     subject="You are now an Admin",
+        #     recipients=[admin_data.email],
+        #     body="Hi {}, here is your password for NotificationMS {}".format(
+        #         admin_data.name, password
+        #     ),
+        #     subtype="html",
+        # )
+        # await settings.SEND_MAIL.send_message(message)
 
     admin = await UserServices.get_admin(user.id, admin_data.application_id)
     if admin:
@@ -99,7 +106,6 @@ async def create_admin(admin_data: user_models.AdminDataInput):
         data={"user_id": user.id, "application_id": application.id},
         expires_delta=timedelta(minutes=user_constants.INVITATION_TOKEN_EXPIRES_TIME),
     )
-    print(invitation_code)
     await user_schemas.Admin.create(
         user_id=user.id,
         application_id=admin_data.application_id,
@@ -110,13 +116,16 @@ async def create_admin(admin_data: user_models.AdminDataInput):
         application=application.name,
         invitationCode=invitation_code,
     )
-    message = MessageSchema(
-        subject="You are now an Admin",
-        recipients=[admin_data.email],
-        body=output,
-        subtype="html",
+    # message = MessageSchema(
+    #     subject="You are now an Admin",
+    #     recipients=[admin_data.email],
+    #     body=output,
+    #     subtype="html",
+    # )
+    # await settings.SEND_MAIL.send_message(message)
+    await arq_setup.redis_pool.enqueue_job(
+        "send_mail", admin_data.email, "You are now an Admin", output
     )
-    await settings.SEND_MAIL.send_message(message)
     return {"Admin Created Successfully"}
 
 
@@ -137,13 +146,87 @@ async def update_invitation_status(invitation_code: str):
     return {"Invitation Accepted"}
 
 
+@router.get(
+    "/user/{user_id}",
+    response_model=user_models.UserDataOutput,
+    dependencies=[Depends(auth.is_system_admin)],
+)
+async def get_user(user_id: int):
+    user = await UserServices.get_user_by_id(user_id)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=user_constants.USER_NOT_EXIST
+        )
+    return user
+
+
+@router.get(
+    "/admins",
+    response_model=List[user_models.AdminDataOutput],
+    dependencies=[Depends(auth.is_system_admin)],
+)
+async def get_all_admins() -> List[user_models.AdminDataOutput]:
+    admins = (
+        await user_schemas.Admin.all().prefetch_related("user", "application").all()
+    )
+    admin_data = []
+    for admin in admins:
+        admin_data.append(
+            {
+                "user_id": admin.user_id,
+                "application_id": admin.application_id,
+                "email": admin.user.email,
+                "name": admin.user.name,
+                "application_name": admin.application.name,
+                "status": str(admin.status).rsplit(".", 1)[1],
+                "is_active": "True" if admin.deleted_at == None else "False",
+            }
+        )
+    return admin_data
+
+
+@router.put("/user/{user_id}", dependencies=[Depends(auth.is_system_admin)])
+async def update_admin_detail(user_id: int, admin_data: user_models.UserDataOutput):
+    user = await UserServices.get_user_by_id(user_id)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="user not found"
+        )
+
+    user_with_email = await UserServices.get_user_by_email(admin_data.email.lower())
+    if user_with_email and (user_with_email.id != user_id):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=user_constants.USER_ALREADY_EXIST,
+        )
+
+    user.name = admin_data.name
+    user.email = admin_data.email
+    user.role = admin_data.role
+    await user.save()
+    return {"User updated Successfully"}
+
+
+@router.delete(
+    "/user/{user_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(auth.is_system_admin)],
+)
+async def delete_admin(user_id: int, application_id: int):
+    admin = await UserServices.get_admin(user_id, application_id)
+    if not admin:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="No Admin Found"
+        )
+    admin.deleted_at = datetime.utcnow()
+    await admin.save()
+    return {"admin deleted successfully"}
 
 
 @router.get("/validate_user")
 async def validate_user(current_user: bool = Depends(auth.get_current_user)):
-    if current_user == None: 
-        return {"loginStatus":False, "systemAdminStatus": False}
+    if current_user == None:
+        return {"loginStatus": False, "systemAdminStatus": False}
     if current_user.role == 1:
         return {"loginStatus": True, "systemAdminStatus": True}
     return {"loginStatus": True, "systemAdminStatus": False}
-    

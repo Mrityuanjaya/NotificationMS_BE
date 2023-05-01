@@ -9,7 +9,7 @@ from apps.modules.applications import services as application_services
 from apps.modules.applications import models as application_models
 
 
-router = APIRouter()
+router = APIRouter(tags=["applications"])
 
 
 @router.post(

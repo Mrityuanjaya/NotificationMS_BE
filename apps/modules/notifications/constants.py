@@ -3,6 +3,10 @@ HIGH_PRIORITY = 1
 MEDIUM_PRIORITY = 2
 LOW_PRIORITY = 3
 
+EMAIL = 1
+PUSH = 2
+WEB = 3
+
 ERROR_MESSAGES = {
     "EMPTY_REQUESTS": "No Request is present",
 }

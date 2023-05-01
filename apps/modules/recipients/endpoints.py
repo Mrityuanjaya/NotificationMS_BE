@@ -10,7 +10,7 @@ from apps.modules.recipients.services import RecipientServices
 from apps.modules.users.services import UserServices
 import uuid
 
-router = APIRouter()
+router = APIRouter(tags=["recipients"])
 
 
 @router.get("/recipients")

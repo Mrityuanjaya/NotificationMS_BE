@@ -1,6 +1,9 @@
 from fastapi import HTTPException, status
 
-from apps.modules.applications import models as application_models, schemas as application_schemas
+from apps.modules.applications import (
+    models as application_models,
+    schemas as application_schemas,
+)
 from apps.modules.applications import constants as application_constants
 from apps.modules.common.services import CommonServices
 from apps.modules.users import schemas as user_schemas
@@ -46,22 +49,29 @@ class ApplicationServices:
                 )
             return applications
 
-        application_List = await application_schema.Application.all().values()
+        application_List = await application_schemas.Application.all().values()
         if application_List is None:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=application_constants.ERROR_MESSAGES["EMPTY_LIST"],
             )
         return application_List
-    
+
     async def get_application_by_id(id: int):
         """
         function to get application by it's id
         """
-        return await application_schemas.Application.get_or_none(id=id) 
-    
+        return await application_schemas.Application.get_or_none(id=id)
+
     async def get_active_application_by_id(id: int):
         """
         function to get active application by it's id
         """
-        return await application_schemas.Application.get_or_none(id=id, deleted_at__isnull=True) 
+        return await application_schemas.Application.get_or_none(
+            id=id, deleted_at__isnull=True
+        )
+
+    async def get_application_by_access_key(access_key: str):
+        return await application_schemas.Application.filter(
+            access_key=access_key
+        ).first()

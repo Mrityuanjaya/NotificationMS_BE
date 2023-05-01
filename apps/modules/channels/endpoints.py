@@ -8,7 +8,7 @@ from apps.modules.channels import schemas as channel_schemas, models as channel_
 from apps.modules.users import constants as user_constants, schemas as user_schemas
 from apps.modules.users.services import UserServices
 
-router = APIRouter()
+router = APIRouter(tags=["channels"])
 
 
 @router.post("/channel", dependencies=[Depends(auth.is_system_admin)])

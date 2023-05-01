@@ -1,8 +1,22 @@
 import datetime
-from typing import List
-from pydantic import BaseModel, EmailStr, validator
-from pydantic import Json
+from typing import List, Dict, Any
 from apps.modules.notifications import constants as notification_constants
+from pydantic import BaseModel, EmailStr, validator
+
+
+class NotificationData(BaseModel):
+    recipients: List[EmailStr]
+    priority: int
+    subject: str
+    description: str
+    template: str = None
+    template_data: Dict[str, Any] = None
+
+    @validator("priority")
+    def validate_priority(cls, value):
+        if value not in (notification_constants.HIGH_PRIORITY, notification_constants.LOW_PRIORITY, notification_constants.MEDIUM_PRIORITY):
+            raise ValueError("Invalid Priority")
+        return value
 
 
 class SuccessFailure(BaseModel):
@@ -23,12 +37,3 @@ class RequestReport(BaseModel):
     request_list: List[RequestOutput]
 
 
-class NotificationRequest(BaseModel):
-    emails : List[EmailStr]
-    priority : int
-
-    @validator("priority")
-    def validate_priority(cls, value):
-        if value not in (notification_constants.HIGH_PRIORITY, notification_constants.MEDIUM_PRIORITY, notification_constants.LOW_PRIORITY):
-            raise ValueError("Invalid Notification Priority")
-        return value

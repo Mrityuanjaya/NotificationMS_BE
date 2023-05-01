@@ -10,19 +10,26 @@ class Request(common_schemas.Base):
         EMAIL_PUSH = 2
         EMAIL = 3
 
+
     id = fields.UUIDField(pk=True)
     application = fields.ForeignKeyField("models.Application", related_name="requests")
     body = fields.JSONField()
-    template = fields.CharField(max_length=255)
-    total_request = fields.IntField()
+    total_recipients = fields.IntField()
     priority = fields.IntEnumField(Priority)
     response = fields.JSONField()
 
 
 class Notification(common_schemas.Base):
+    class NotificationType(IntEnum):
+        EMAIL = 1
+        PUSH = 2
+        WEB = 3
+
+    id = fields.UUIDField(pk=True)
     request = fields.ForeignKeyField("models.Request", related_name="notifications")
     recipient = fields.ForeignKeyField("models.Recipient", related_name="notifications")
     status = fields.BooleanField(default=False)
+    type = fields.IntEnumField(NotificationType)
 
     class Meta:
         table = "notification"

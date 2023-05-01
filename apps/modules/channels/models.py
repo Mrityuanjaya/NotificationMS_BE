@@ -1,4 +1,4 @@
-from typing import Dict, Union
+from typing import Dict, Union, Any
 from pydantic import BaseModel, EmailStr, constr, validator
 from apps.modules.channels import constants as channel_constants
 

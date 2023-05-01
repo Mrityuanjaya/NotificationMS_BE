@@ -1,5 +1,5 @@
 from typing import List
-from apps.modules.channels import schemas as channel_schemas
+from apps.modules.channels import schemas as channel_schemas, constants as channel_constants
 
 
 class ChannelServices:
@@ -29,16 +29,29 @@ class ChannelServices:
                 .limit(records_per_page)
                 .offset(records_per_page * (page_no - 1)),
             }
-        
+
     async def get_channel_by_alias(alias: str):
         """
         function to get channel by its alias
         """
         return await channel_schemas.Channel.get_or_none(alias=alias)
-    
-    
+
     async def get_active_channel_by_alias(alias: str) -> channel_schemas.Channel:
         """
         function to get active channel by its alias
         """
-        return await channel_schemas.Channel.get_or_none(alias=alias, deleted_at__isnull=True)
+        return await channel_schemas.Channel.get_or_none(
+            alias=alias, deleted_at__isnull=True
+        )
+
+    async def get_email_channel(
+        application_id: int,
+    ) -> dict:
+        """
+        function to get active email channel of a particular application
+        """
+        return (
+            await channel_schemas.Channel.filter(application_id=application_id, type=channel_constants.EMAIL_CHANNEL_TYPE)
+            .first()
+            .values("configuration")
+        )

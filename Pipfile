@@ -17,6 +17,7 @@ jinja2 = "*"
 aerich = "*"
 python-dateutil = "*"
 firebase-admin = "*"
+arq = "*"
 
 [dev-packages]
 

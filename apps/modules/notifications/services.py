@@ -3,12 +3,13 @@ from dateutil.relativedelta import relativedelta
 from typing import List
 
 from fastapi import HTTPException, status
-
+from tortoise import transactions
+from apps.libs import arq
 from apps.modules.notifications import schemas as notification_schema
 from apps.modules.notifications import models as notification_models
 from apps.modules.notifications import constants as notification_constants
 from apps.modules.users import schemas as user_schemas
-from firebase_admin import messaging
+
 
 class NotificationServices:
     async def response(request_list):
@@ -35,7 +36,6 @@ class NotificationServices:
         """
         function to get the List of Requests
         """
-        print(start_date, "  ", end_date)
         if application_id == 0 and current_user.role == 1:
             request_list = (
                 await notification_schema.Request.filter(
@@ -88,33 +88,45 @@ class NotificationServices:
             )
         return await NotificationServices.response(request_list)
 
+    async def update_status(request_id, notification_id):
+        notification = await notification_schema.Notification.filter(
+            id=notification_id
+        ).first()
+        notification.status = 1
+        await notification.save()
 
-    async def send_bulk_push_web_notifications_batch(token_batch, title, body):
-        batch_success_count = 0
-        batch_failure_count = 0
-        message = messaging.MulticastMessage(
-                notification=messaging.Notification(
-                    title=title,
-                    body=body,
-                ),
-                tokens=token_batch,
+        async with transactions.in_transaction():
+            request = (
+                await notification_schema.Request.filter(id=request_id)
+                .select_for_update()
+                .first()
             )
-        response : messaging.BatchResponse = messaging.send_multicast(message)
-        print(len(response.responses))           #-> List of SendResponse
-        for idx, single_response in enumerate(response.responses):
-            if single_response.success:
-                batch_success_count += 1
-            else:
-                print(f"Failed to send notification to {token_batch[idx]} with error: {single_response.exception}")
-                batch_failure_count += 1
-        return {'batch_success_count': batch_success_count, "batch_failure_count": batch_failure_count}
+            request.response["success"] += 1
+            request.response["failure"] -= 1
+            await request.save()
 
-    async def send_bulk_push_web_notification(tokens, title, body):
+    async def send_bulk_push_web_notification(notification_ids, request_id, tokens, title, body):
+        """
+        Sends notifications to all the tokens with title and body. It internally calls send_bulk_push_web_notifications_batch
+        with at max 500 tokens as fcm can multicast a message to upto 500 tokens at once
+
+        Args:
+        notification_ids: IDs of notifications to update notification schema after sending the notification
+        request_id: ID of request to update success and failure count after sending the notification
+        tokens: List of tokens to which we want to send notifications
+        title: title of the notification message
+        body: body of the notification
+
+        Returns: 
+        None
+
+        Raises:
+        None
+        """
+        
         token_batches = [tokens[i:i+500] for i in range(0, len(tokens), 500)]
-        total_failure_count = 0
-        total_success_count = 0
-        for token_batch in token_batches:
-            response = await NotificationServices.send_bulk_push_web_notifications_batch(token_batch=token_batch, title=title, body=body)
-            total_success_count += response["batch_success_count"]
-            total_failure_count += response["batch_failure_count"]
-        return {"total success": total_success_count, "total_failure": total_failure_count}
+        notification_ids_batches = [notification_ids[i:i+500] for i in range(0, len(notification_ids), 500)]
+        total_no_of_batches = len(token_batches)
+        for i in range (total_no_of_batches):
+            await arq.redis_pool.enqueue_job("send_bulk_push_web_notifications_batch", notification_ids_batches[i], request_id, token_batches[i], title, body)
+    
