@@ -7,7 +7,6 @@ from firebase_admin import messaging
 from tortoise import transactions
 from apps.modules.notifications import services as notification_services, schemas as notification_schemas
 
-
 async def send_bulk_push_web_notifications_batch(ctx, notification_ids_batch, request_id, token_batch, title, body):
     """
     Sends notifications to all the tokens of token_batch with title and body.
@@ -58,10 +57,29 @@ async def send_bulk_push_web_notifications_batch(ctx, notification_ids_batch, re
 
 
 
+async def send_invitation(ctx, email_conf, recipient: str, subject: str, body: str):
+    config = ConnectionConfig(**email_conf)
+    fm = FastMail(config=config)
+    message = MessageSchema(
+        recipients=[recipient], subject=subject, body=body, subtype="html"
+    )
+    await fm.send_message(message)
+
+
+
+async def send_invitation(ctx, email_conf, recipient: str, subject: str, body: str):
+    config = ConnectionConfig(**email_conf)
+    fm = FastMail(config=config)
+    message = MessageSchema(
+        recipients=[recipient], subject=subject, body=body, subtype="html"
+    )
+    await fm.send_message(message)
+
+
 async def send_mail(
     ctx,
     email_conf,
-    recepient: str,
+    recipient: str,
     subject: str,
     body: str,
     request_id: str,
@@ -70,7 +88,7 @@ async def send_mail(
     config = ConnectionConfig(**email_conf)
     fm = FastMail(config=config)
     message = MessageSchema(
-        recipients=[recepient], subject=subject, body=body, subtype="html"
+        recipients=[recipient], subject=subject, body=body, subtype="html"
     )
     await fm.send_message(message)
 
@@ -79,7 +97,7 @@ async def after_end_job(ctx):
     id = ctx["job_id"]
     job = jobs.Job(id, ctx["redis"])
     job_info = await job.info()
-    if job_info.function == "send_bulk_push_web_notifications_batch":
+    if job_info.function != "send_mail":
         return
     try:
         await job.result()
@@ -92,4 +110,4 @@ async def after_end_job(ctx):
         pass
 
 
-worker = Worker(functions=[send_mail, send_bulk_push_web_notifications_batch], after_job_end=after_end_job)
+worker = Worker(functions=[send_mail, send_invitation, send_bulk_push_web_notifications_batch], after_job_end=after_end_job)

@@ -8,7 +8,7 @@ from apps.libs.arq import worker
 
 
 async def setup_arq():
-    arq.redis_pool = await create_pool(RedisSettings())
+    arq.pool_redis = await create_pool(RedisSettings())
     await worker.worker.main()
 
 
