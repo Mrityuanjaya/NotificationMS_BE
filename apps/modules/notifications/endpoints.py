@@ -8,7 +8,6 @@ from fastapi import status, Depends
 from apps.modules.common import auth
 from apps.modules.users import schemas as user_schemas
 from apps.modules.notifications import services as notification_services
-from apps.modules.notifications import models as notification_models
 from apps.modules.notifications import constants as notification_constants
 
 

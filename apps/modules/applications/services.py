@@ -21,11 +21,6 @@ class ApplicationServices:
             ),
         )
 
-        if new_application is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail=application_constants.ERROR_MESSAGES["UNAUTHORIZED_USER"],
-            )
         return new_application
 
     async def get_application_list(current_user):
@@ -54,7 +49,7 @@ class ApplicationServices:
         application_List = await application_schema.Application.all().values()
         if application_List is None:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_404_NOT_FOUND,
                 detail=application_constants.ERROR_MESSAGES["EMPTY_LIST"],
             )
         return application_List

@@ -2,6 +2,8 @@ from fastapi import File, HTTPException, UploadFile, status
 
 from apps.modules.recipients import schemas as recipient_schema
 from apps.modules.users import schemas as user_schemas
+from apps.modules.applications import schemas as application_schema
+from apps.modules.applications import constants as application_constants
 
 
 class RecipientServices:
@@ -26,22 +28,36 @@ class RecipientServices:
     async def count_recipients(
         current_user: user_schemas.User, application_id: int = None
     ):
-        """"""
+        """
+        function to return count of recipients in perticular application
+        """
         if application_id == 0 and current_user.role == 1:
             count = await recipient_schema.Recipient.all().count()
             return count
 
         elif application_id == 0 and current_user.role == 2:
             application_list = (
-                await user_schemas.Admin.filter(user_id=current_user.id)
+                await user_schemas.Admin.filter(user_id=current_user.id, status=2)
                 .all()
                 .prefetch_related("user", "application")
                 .all()
             )
             count = await recipient_schema.Recipient.filter(
-                id=application_list[0].id
+                application=application_list[0].id
             ).count()
             return count
 
-        count = await recipient_schema.Recipient.filter(id=application_id).count()
+        application_count = await application_schema.Application.filter(
+            id=application_id
+        ).count()
+
+        if application_count == 0:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=application_constants.ERROR_MESSAGES["EMPTY_LIST"],
+            )
+
+        count = await recipient_schema.Recipient.filter(
+            application=application_id
+        ).count()
         return count

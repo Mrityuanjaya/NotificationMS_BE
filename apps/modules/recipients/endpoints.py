@@ -45,7 +45,7 @@ async def upload_recipients(csv_file: UploadFile = File(..., media_type="text/cs
         )
 
 
-@router.get("/recipients")
+@router.get("/total_recipients")
 async def count_recipients(
     current_user: user_schemas.User = Depends(auth.get_current_user),
     application_id: int = None,

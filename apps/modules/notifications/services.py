@@ -2,8 +2,6 @@ import datetime
 from dateutil.relativedelta import relativedelta
 from typing import List
 
-from fastapi import HTTPException, status
-
 from apps.modules.notifications import schemas as notification_schema
 from apps.modules.notifications import models as notification_models
 from apps.modules.notifications import constants as notification_constants
@@ -44,11 +42,6 @@ class NotificationServices:
                 .all()
                 .values()
             )
-            if not request_list:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=notification_constants.ERROR_MESSAGES["EMPTY_REQUESTS"],
-                )
 
             return await NotificationServices.response(request_list)
 
@@ -67,11 +60,6 @@ class NotificationServices:
                 .all()
                 .values()
             )
-            if not request_list:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=notification_constants.ERROR_MESSAGES["EMPTY_REQUESTS"],
-                )
 
             return await NotificationServices.response(request_list)
         request_list = (
@@ -81,9 +69,5 @@ class NotificationServices:
             .all()
             .values()
         )
-        if not request_list:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=notification_constants.ERROR_MESSAGES["EMPTY_REQUESTS"],
-            )
+
         return await NotificationServices.response(request_list)
