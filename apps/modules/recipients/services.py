@@ -37,7 +37,9 @@ class RecipientServices:
 
         elif application_id == 0 and current_user.role == 2:
             application_list = (
-                await user_schemas.Admin.filter(user_id=current_user.id, status=2)
+                await user_schemas.Admin.filter(
+                    user_id=current_user.id, status=2, deleted_at=None
+                )
                 .all()
                 .prefetch_related("user", "application")
                 .all()

@@ -29,14 +29,16 @@ class ApplicationServices:
         """
         if current_user.role == 2:
             application_List = (
-                await user_schemas.Admin.filter(user_id=current_user.id)
+                await user_schemas.Admin.filter(
+                    user_id=current_user.id, status=2, deleted_at=None
+                )
                 .all()
                 .prefetch_related("user", "application")
                 .all()
             )
             if application_List is None:
                 raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
+                    status_code=status.HTTP_404_NOT_FOUND,
                     detail=application_constants.ERROR_MESSAGES["EMPTY_LIST"],
                 )
             applications = []

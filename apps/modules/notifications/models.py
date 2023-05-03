@@ -19,3 +19,11 @@ class RequestReport(BaseModel):
     total_success: int
     total_failure: int
     request_list: List[RequestOutput]
+
+
+class Notifications(BaseModel):
+    id: int
+    recipient_id: int
+    status: bool
+    type: int
+    created_at: datetime.datetime
