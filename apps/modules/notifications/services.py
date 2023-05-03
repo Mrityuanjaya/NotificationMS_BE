@@ -1,8 +1,8 @@
-import datetime
+import asyncio, datetime
 from dateutil.relativedelta import relativedelta
 from typing import List
 
-from fastapi import HTTPException, status
+import asyncpg.exceptions as postgres_exceptions
 from tortoise import transactions
 from apps.libs import arq
 from apps.modules.notifications import schemas as notification_schema
@@ -79,15 +79,20 @@ class NotificationServices:
         notification.status = 1
         await notification.save()
 
-        async with transactions.in_transaction():
-            request = (
-                await notification_schema.Request.filter(id=request_id)
-                .select_for_update()
-                .first()
-            )
-            request.response["success"] += 1
-            request.response["failure"] -= 1
-            await request.save()
+        for retry in range(0, notification_constants.MAX_RETRY): 
+            try:
+                async with transactions.in_transaction():
+                    request = (
+                        await notification_schema.Request.filter(id=request_id)
+                        .select_for_update()
+                        .first()
+                    )
+                    request.response["success"] += 1
+                    request.response["failure"] -= 1
+                    await request.save()
+                    break
+            except postgres_exceptions.DeadlockDetectedError:
+                asyncio.sleep((retry + 1) * notification_constants.SLEEP_TIME)
 
     async def send_bulk_push_web_notification(
         notification_ids, request_id, tokens, title, body

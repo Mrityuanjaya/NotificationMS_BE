@@ -3,7 +3,7 @@ import datetime
 import uuid
 from dateutil.relativedelta import relativedelta
 
-from fastapi import APIRouter, Header, status, Depends, HTTPException
+from fastapi import APIRouter, Header, status, Depends, HTTPException, Request
 
 from apps.libs import arq
 from apps.modules.jinja import setup as jinja_setup
@@ -24,6 +24,7 @@ router = APIRouter(tags=["notifications"])
 
 @router.post("/send_notifications")
 async def send_notifications(
+    request: Request,
     access_key: Annotated[str, Header()],
     notification_data: notification_models.NotificationData,
 ):
@@ -53,8 +54,8 @@ async def send_notifications(
     if template_name != "":
         try:
             body = jinja_setup.find_template(
-                application.name, template_name, template_data
-            )
+                request, application.name, template_name, template_data
+        )
         except:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Template not found"

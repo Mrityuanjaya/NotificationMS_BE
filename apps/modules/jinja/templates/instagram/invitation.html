@@ -1,12 +1,96 @@
-<!Doctype html>
+<!DOCTYPE html>
 <html>
-    <head>
-        <title>{{title}}</title>
-    </head>
-</html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Invitation</title>
+  <style>
+    /* Add your custom styling here */
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f7f7f7;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: #ffffff;
+      padding: 30px;
+      border-radius: 5px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      color: #333333;
+      font-size: 28px;
+      margin: 0 0 20px 0;
+      text-align: center;
+    }
+
+    p {
+      color: #555555;
+      font-size: 18px;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    .btn {
+      display:flex;
+      justify-content:center;
+    }
+    .button {
+      display: inline-block;
+      background-color: #4CAF50;
+      color: #ffffff;
+      padding: 15px 30px;
+      text-decoration: none;
+      border-radius: 5px;
+      font-size: 18px;
+    }
+
+    .footer {
+      margin-top: 30px;
+      text-align: center;
+      color: #888888;
+      font-size: 14px;
+    }
+
+    .footer a {
+      color: #888888;
+      text-decoration: none;
+    }
+    
+    .img-container {
+      position:relative;
+      height:3rem;
+      width:5rem;
+      top: 2.4rem;
+      left: 7.7rem;
+    }
+     
+    .logo {
+      height: 100%;
+      width: 100%;
+    }
+  </style>
+</head>
+
 <body>
-    <h1>ADMIN ACCESS</h1>
-    <h3>Hi {{name}}, you have been Invited to become an admin of {{application}} at Notification Ms<br>
-    <p>Please click on the below button to accept invitation</p>
-    <a href="http://localhost:5173/verify?invitation_code={{invitationCode}}">ACCEPT INVITATION</a>
+  <div class="container">
+    <div class="img-container">
+      <img src="{{url_for('static', path='images/Instagram-Logo.png')}}" alt="Application Access" class="logo">
+    </div>
+    <h1>Admin Access</h1>
+    <p>Hello {{name}},</p>
+    <p>You have been invited to become an admin of {{application}}. As an admin, you can monitor notifications status for your application.</p>
+    <p>If you're interested in accepting this invitation, please click the button below:</p>
+    <div class="btn">
+    <p><a href="http://127.0.0.1:5173/verify?invitation_code={{invitationCode}}" class="button">Accept Invitation</a></p>
+    </div>
+    <p>If you have any questions or need further assistance, feel free to reply to this email.</p>
+    <p class="footer">Best regards,<br>Notification MS</p>
+  </div>
 </body>
+
+</html>

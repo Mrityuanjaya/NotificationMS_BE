@@ -2,6 +2,8 @@ import asyncio
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+
 from apps.settings.local import settings
 from apps.core.db import config as db_setup
 from apps.libs.firebase import setup as firebase_setup
@@ -14,6 +16,11 @@ from apps.libs.arq import setup as arq_setup
 from apps.modules.channels.endpoints import router as channel_router
 
 app = FastAPI()
+app.mount(
+    "/apps/modules/jinja/static",
+    StaticFiles(directory="apps/modules/jinja/static"),
+    name="static",
+)
 app.include_router(user_router)
 app.include_router(application_router)
 app.include_router(recipient_router)
