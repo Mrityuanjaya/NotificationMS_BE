@@ -64,15 +64,19 @@ async def create_admin(admin_data: user_models.AdminDataInput):
             status_code=404,
             detail=user_constants.ERROR_MESSAGES["APPLICATION_NOT_EXIST"],
         )
-    system_channel = await channel_services.ChannelServices.get_channel_by_alias(
+    system_channel = await channel_services.ChannelServices.get_active_channel_by_alias(
         "system channel"
     )
+    if system_channel is None:
+        raise HTTPException(
+            status_code=404,
+            detail=user_constants.ERROR_MESSAGES["CHANNEL_NOT_EXIST"],
+        )
     email_conf = system_channel.configuration
     if not user:
         password = common_services.CommonServices.generate_unique_string(
             user_constants.PASSWORD_LENGTH
         )
-        print(password)
         hashed_password = UserServices.get_password_hash(password)
         user = await user_schemas.User.create(
             name=admin_data.name,
@@ -81,12 +85,10 @@ async def create_admin(admin_data: user_models.AdminDataInput):
             role=2,
         )
         subject = "You are now an Admin"
-        body = (
-            "Hi {}, here is your password for NotificationMS {}".format(
-                admin_data.name, password
-            ),
+        body = "Hi {}, here is your password for NotificationMS {}".format(
+            admin_data.name, password
         )
-        await arq.pool_redis.enqueue_job(
+        await arq.redis_pool.enqueue_job(
             "send_invitation", email_conf, admin_data.email, subject, body
         )
 
@@ -111,7 +113,7 @@ async def create_admin(admin_data: user_models.AdminDataInput):
         "invitationCode": invitation_code,
     }
     body = jinja_setup.find_template("app", "invitation", template_data)
-    await arq.pool_redis.enqueue_job(
+    await arq.redis_pool.enqueue_job(
         "send_invitation", email_conf, admin_data.email, "You are now an Admin", body
     )
     return {"Admin Created Successfully"}
@@ -150,12 +152,14 @@ async def get_user(user_id: int):
 
 @router.get(
     "/admins",
-    response_model=List[user_models.AdminDataOutput],
     dependencies=[Depends(auth.is_system_admin)],
+    response_model=user_models.AdminResponse
 )
-async def get_all_admins() -> List[user_models.AdminDataOutput]:
+async def get_all_admins(page_no: int = 1,
+    records_per_page: int =100):
+    total_admins = await user_schemas.Admin.all().count()
     admins = (
-        await user_schemas.Admin.all().prefetch_related("user", "application").all()
+        await user_schemas.Admin.all().limit(records_per_page).offset(records_per_page*(page_no-1)).prefetch_related("user", "application").order_by("user__name")
     )
     admin_data = []
     for admin in admins:
@@ -170,7 +174,7 @@ async def get_all_admins() -> List[user_models.AdminDataOutput]:
                 "is_active": "True" if admin.deleted_at == None else "False",
             }
         )
-    return admin_data
+    return {"total_admins": total_admins, "admins": admin_data}
 
 
 @router.put("/user/{user_id}", dependencies=[Depends(auth.is_system_admin)])

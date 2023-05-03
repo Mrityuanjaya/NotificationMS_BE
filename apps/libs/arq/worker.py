@@ -30,8 +30,11 @@ async def send_bulk_push_web_notifications_batch(ctx, notification_ids_batch, re
     message = messaging.MulticastMessage(
             notification=messaging.Notification(
                 title=title,
-                body=body,
+                body="www.google.com",
             ),
+            data={
+                "url":"asdfas" 
+            },
             tokens=token_batch,
         )
     response : messaging.BatchResponse = messaging.send_multicast(message)
@@ -56,14 +59,6 @@ async def send_bulk_push_web_notifications_batch(ctx, notification_ids_batch, re
     return {'batch_success_count': batch_success_count, "batch_failure_count": batch_failure_count}
 
 
-
-async def send_invitation(ctx, email_conf, recipient: str, subject: str, body: str):
-    config = ConnectionConfig(**email_conf)
-    fm = FastMail(config=config)
-    message = MessageSchema(
-        recipients=[recipient], subject=subject, body=body, subtype="html"
-    )
-    await fm.send_message(message)
 
 
 

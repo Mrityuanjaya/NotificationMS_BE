@@ -1,3 +1,4 @@
+from typing import List
 from pydantic import BaseModel
 from pydantic import Field, validator, EmailStr
 
@@ -37,3 +38,7 @@ class AdminDataOutput(UserData):
     is_active: str
     application_id: int
     user_id: int
+
+class AdminResponse(BaseModel):
+    total_admins: int
+    admins: List[AdminDataOutput]

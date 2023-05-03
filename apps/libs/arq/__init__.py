@@ -1,3 +1,3 @@
 from arq import ArqRedis
 
-pool_redis: ArqRedis
+redis_pool: ArqRedis

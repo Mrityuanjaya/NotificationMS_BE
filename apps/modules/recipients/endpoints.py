@@ -152,3 +152,14 @@ async def upload_recipients(csv_file: UploadFile = File(..., media_type="text/cs
         )
     else:
         return "File Uploaded Successfully"
+    
+
+
+@router.get("/total_recipients")
+async def count_recipients(
+    current_user: user_schemas.User = Depends(auth.get_current_user),
+    application_id: int = None,
+):
+    return await RecipientServices.count_recipients(
+        current_user, application_id
+    )

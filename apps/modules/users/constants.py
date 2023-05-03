@@ -2,6 +2,7 @@ ERROR_MESSAGES = {
     "CREDENTIAL_EXCEPTION": "Username or Password is Incorrect",
     "USER_ALREADY_ADMIN": "User is already an admin of this application",
     "APPLICATION_NOT_EXIST": "This application doesn't exist",
+    "CHANNEL_NOT_EXIST": "This Channel does not exist"
 }
 
 TOKEN_EXPIRY_MINUTES = 120

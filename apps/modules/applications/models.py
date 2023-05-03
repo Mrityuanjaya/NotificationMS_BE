@@ -1,3 +1,4 @@
+from typing import List
 from pydantic import BaseModel, Field
 
 
@@ -10,6 +11,9 @@ class ApplicationOutput(ApplicationInput):
     access_key: str = Field(max_length=64)
 
 
-class Application(BaseModel):
+class Application(ApplicationInput):
     id: int
-    name: str = Field(min_length=2) or Field(max_length=20)
+
+class ApplicationResponse(BaseModel):
+    total_applications: int
+    applications: List[Application]

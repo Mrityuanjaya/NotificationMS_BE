@@ -40,15 +40,10 @@ class NotificationServices:
                 await notification_schema.Request.filter(
                     created_at__range=(start_date, end_date)
                 )
+                .order_by("created_at")
                 .all()
                 .values()
             )
-            # if not request_list:
-            #     raise HTTPException(
-            #         status_code=status.HTTP_400_BAD_REQUEST,
-            #         detail=notification_constants.ERROR_MESSAGES["EMPTY_REQUESTS"],
-            #     )
-
             return await NotificationServices.response(request_list)
 
         elif application_id == 0 and current_user.role == 2:
@@ -66,11 +61,6 @@ class NotificationServices:
                 .all()
                 .values()
             )
-            # if not request_list:
-            #     raise HTTPException(
-            #         status_code=status.HTTP_400_BAD_REQUEST,
-            #         detail=notification_constants.ERROR_MESSAGES["EMPTY_REQUESTS"],
-            #     )
 
             return await NotificationServices.response(request_list)
         request_list = (
@@ -80,11 +70,6 @@ class NotificationServices:
             .all()
             .values()
         )
-        # if not request_list:
-        # raise HTTPException(
-        #     status_code=status.HTTP_400_BAD_REQUEST,
-        #     detail=notification_constants.ERROR_MESSAGES["EMPTY_REQUESTS"],
-        # )
         return await NotificationServices.response(request_list)
 
     async def update_status(request_id, notification_id):
@@ -104,7 +89,9 @@ class NotificationServices:
             request.response["failure"] -= 1
             await request.save()
 
-    async def send_bulk_push_web_notification(notification_ids, request_id, tokens, title, body):
+    async def send_bulk_push_web_notification(
+        notification_ids, request_id, tokens, title, body
+    ):
         """
         Sends notifications to all the tokens with title and body. It internally calls send_bulk_push_web_notifications_batch
         with at max 500 tokens as fcm can multicast a message to upto 500 tokens at once
@@ -116,16 +103,24 @@ class NotificationServices:
         title: title of the notification message
         body: body of the notification
 
-        Returns: 
+        Returns:
         None
 
         Raises:
         None
         """
-        
-        token_batches = [tokens[i:i+500] for i in range(0, len(tokens), 500)]
-        notification_ids_batches = [notification_ids[i:i+500] for i in range(0, len(notification_ids), 500)]
+
+        token_batches = [tokens[i : i + 500] for i in range(0, len(tokens), 500)]
+        notification_ids_batches = [
+            notification_ids[i : i + 500] for i in range(0, len(notification_ids), 500)
+        ]
         total_no_of_batches = len(token_batches)
-        for i in range (total_no_of_batches):
-            await arq.redis_pool.enqueue_job("send_bulk_push_web_notifications_batch", notification_ids_batches[i], request_id, token_batches[i], title, body)
-    
+        for i in range(total_no_of_batches):
+            await arq.redis_pool.enqueue_job(
+                "send_bulk_push_web_notifications_batch",
+                notification_ids_batches[i],
+                request_id,
+                token_batches[i],
+                title,
+                body,
+            )

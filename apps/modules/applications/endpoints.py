@@ -29,11 +29,14 @@ async def create_application(
 @router.get(
     "/applications",
     status_code=status.HTTP_200_OK,
-    response_model=List[application_models.Application],
+    response_model=application_models.ApplicationResponse, 
 )
 async def get_application_list(
-    current_user: user_schemas.User = Depends(auth.get_current_user),
+    current_user: user_schemas.User = Depends(auth.get_current_user),page_no: int = None, records_per_page: int = None
 ):
-    return await application_services.ApplicationServices.get_application_list(
-        current_user
+    if page_no == None:
+        return await application_services.ApplicationServices.get_active_application_list(current_user)
+    else:
+        return await application_services.ApplicationServices.get_limited_active_application_list(
+        current_user, page_no, records_per_page
     )

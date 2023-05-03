@@ -26,36 +26,53 @@ class ApplicationServices:
 
         return new_application
 
-    async def get_application_list(current_user):
-        """
-        function to get the List of Applications
-        """
+    async def get_active_application_list(current_user):
         if current_user.role == 2:
-            application_List = (
-                await user_schemas.Admin.filter(user_id=current_user.id)
-                .all()
-                .prefetch_related("user", "application")
-                .all()
-            )
-            if application_List is None:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=application_constants.ERROR_MESSAGES["EMPTY_LIST"],
-                )
+            application_list = await user_schemas.Admin.filter(
+                user_id=current_user.id, status=2, deleted_at=None
+            ).prefetch_related("user", "application")
             applications = []
-            for app in application_List:
+            for app in application_list:
                 applications.append(
                     {"id": app.application.id, "name": app.application.name}
                 )
-            return applications
+            total_applications = await user_schemas.Admin.filter(
+                user_id=current_user.id, status=2, deleted_at=None
+            ).count()
+        else:
+            applications = await application_schemas.Application.all()
+            total_applications = await application_schemas.Application.all().count()
+        return {"total_applications": total_applications, "applications": applications}
 
-        application_List = await application_schemas.Application.all().values()
-        if application_List is None:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=application_constants.ERROR_MESSAGES["EMPTY_LIST"],
+    async def get_limited_active_application_list(
+        current_user, page_no: int, records_per_page: int
+    ):
+        if current_user.role == 2:
+            application_list = (
+                await user_schemas.Admin.filter(
+                    user_id=current_user.id, status=2, deleted_at=None
+                )
+                .offset(records_per_page * (page_no - 1))
+                .limit(records_per_page)
+                .prefetch_related("user", "application")
             )
-        return application_List
+            applications = []
+            for app in application_list:
+                applications.append(
+                    {"id": app.application.id, "name": app.application.name}
+                )
+            total_applications = await user_schemas.Admin.filter(
+                user_id=current_user.id, status=2, deleted_at=None
+            ).count()
+        else:
+            applications = (
+                await application_schemas.Application.all()
+                .offset(records_per_page * (page_no - 1))
+                .limit(records_per_page).values("id", "name")
+            )
+            total_applications = await application_schemas.Application.all().count()
+        return {"total_applications": total_applications, "applications": applications}
+
 
     async def get_application_by_id(id: int):
         """
