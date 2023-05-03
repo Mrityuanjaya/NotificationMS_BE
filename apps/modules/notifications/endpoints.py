@@ -2,7 +2,7 @@ from typing import Annotated
 import datetime
 from dateutil.relativedelta import relativedelta
 
-from fastapi import APIRouter, Header, status, Depends, HTTPException
+from fastapi import APIRouter, Header, status, Depends, HTTPException, Request
 
 from apps.libs import arq
 from apps.modules.jinja import setup as jinja_setup
@@ -23,6 +23,7 @@ router = APIRouter()
 
 @router.post("/send_notifications")
 async def send_notifications(
+    request: Request,
     access_key: Annotated[str, Header()],
     notification_data: notification_models.NotificationData,
 ):
@@ -42,14 +43,14 @@ async def send_notifications(
         notification_data.template_data if notification_data.template_data else {}
     )
     if template_name != "":
-        try:
-            body = jinja_setup.find_template(
-                application.name, template_name, template_data
-            )
-        except:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Template not found"
-            )
+        # try:
+        body = jinja_setup.find_template(
+            request, application.name, template_name, template_data
+        )
+        # except:
+        #     raise HTTPException(
+        #         status_code=status.HTTP_404_NOT_FOUND, detail="Template not found"
+        #     )
     else:
         body = notification_data.description
     body_data = {
@@ -58,7 +59,7 @@ async def send_notifications(
         "template": template_name,
         "template_data": template_data,
     }
-
+    print(body)
     recipients = await recipients_services.RecipientServices.get_recipients_by_emails(
         notification_data.recepients, application_id=application.id
     )

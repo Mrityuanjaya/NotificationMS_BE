@@ -81,10 +81,8 @@ async def create_admin(admin_data: user_models.AdminDataInput):
             role=2,
         )
         subject = "You are now an Admin"
-        body = (
-            "Hi {}, here is your password for NotificationMS {}".format(
-                admin_data.name, password
-            ),
+        body = "Hi {}, here is your password for NotificationMS {}".format(
+            admin_data.name, password
         )
         await arq.pool_redis.enqueue_job(
             "send_invitation", email_conf, admin_data.email, subject, body
