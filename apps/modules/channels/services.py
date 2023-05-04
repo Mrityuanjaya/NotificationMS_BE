@@ -57,6 +57,14 @@ class ChannelServices:
             alias=alias, deleted_at__isnull=True
         )
 
+    async def get_channel_by_alias(alias: str):
+        """
+        function to get channel along with application name
+        """
+        return await channel_schemas.Channel.get_or_none(
+            alias=alias, deleted_at__isnull=True
+        ).select_related("application")
+
     async def get_email_channel(
         application_id: int,
     ) -> dict:
