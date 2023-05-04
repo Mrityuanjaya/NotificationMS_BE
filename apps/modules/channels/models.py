@@ -1,4 +1,4 @@
-from typing import Dict, Union, Any
+from typing import Dict, Union, List
 from pydantic import BaseModel, EmailStr, constr, validator
 from apps.modules.channels import constants as channel_constants
 
@@ -71,3 +71,17 @@ class EmailChannelUpdateInput(ChannelUpdateInput):
 
 class PushWebChannelUpdateInput(ChannelUpdateInput):
     configuration: FireBaseConfig
+
+
+class channelOutput(BaseModel):
+    alias: str
+    application_name: str
+    description: str
+    is_active: str
+    type: str
+    created_at: str
+
+
+class channelPageOutput(BaseModel):
+    total_channels: int
+    channels: List[channelOutput]

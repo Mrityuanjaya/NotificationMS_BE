@@ -1,7 +1,7 @@
 from typing import List
 from datetime import datetime, timedelta
 
-from fastapi import APIRouter, Depends, HTTPException, status,Request
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordRequestForm
 
 from apps.modules.users.services import UserServices
@@ -55,7 +55,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()) -> user_models
 
 
 @router.post("/invite", dependencies=[Depends(auth.is_system_admin)])
-async def create_admin(request:Request,admin_data: user_models.AdminDataInput):
+async def create_admin(request: Request, admin_data: user_models.AdminDataInput):
     user = await UserServices.get_user_by_email(admin_data.email)
     application = await UserServices.get_application_by_id(admin_data.application_id)
 
@@ -112,7 +112,7 @@ async def create_admin(request:Request,admin_data: user_models.AdminDataInput):
         "application": application.name,
         "invitationCode": invitation_code,
     }
-    body = jinja_setup.find_template(request,"app", "invitation", template_data)
+    body = jinja_setup.find_template(request, "app", "invitation", template_data)
     await arq.redis_pool.enqueue_job(
         "send_invitation", email_conf, admin_data.email, "You are now an Admin", body
     )
@@ -153,13 +153,16 @@ async def get_user(user_id: int):
 @router.get(
     "/admins",
     dependencies=[Depends(auth.is_system_admin)],
-    response_model=user_models.AdminResponse
+    response_model=user_models.AdminResponse,
 )
-async def get_all_admins(page_no: int = 1,
-    records_per_page: int =100):
+async def get_all_admins(page_no: int = 1, records_per_page: int = 100):
     total_admins = await user_schemas.Admin.all().count()
     admins = (
-        await user_schemas.Admin.all().limit(records_per_page).offset(records_per_page*(page_no-1)).prefetch_related("user", "application").order_by("user__name")
+        await user_schemas.Admin.all()
+        .limit(records_per_page)
+        .offset(records_per_page * (page_no - 1))
+        .prefetch_related("user", "application")
+        .order_by("user__name")
     )
     admin_data = []
     for admin in admins:
