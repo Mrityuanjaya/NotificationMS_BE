@@ -2,6 +2,7 @@ import datetime
 from typing import List, Dict, Any
 from apps.modules.notifications import constants as notification_constants
 from pydantic import BaseModel, EmailStr, validator
+from uuid import UUID
 
 
 class NotificationData(BaseModel):
@@ -14,7 +15,11 @@ class NotificationData(BaseModel):
 
     @validator("priority")
     def validate_priority(cls, value):
-        if value not in (notification_constants.HIGH_PRIORITY, notification_constants.LOW_PRIORITY, notification_constants.MEDIUM_PRIORITY):
+        if value not in (
+            notification_constants.HIGH_PRIORITY,
+            notification_constants.LOW_PRIORITY,
+            notification_constants.MEDIUM_PRIORITY,
+        ):
             raise ValueError("Invalid Priority")
         return value
 
@@ -37,3 +42,20 @@ class RequestReport(BaseModel):
     request_list: List[RequestOutput]
 
 
+class Notifications(BaseModel):
+    id: UUID
+    request_id: UUID
+    recipient_id: UUID
+    status: int
+    type: int
+    created_at: datetime.datetime
+
+
+class NotificationsResponse(BaseModel):
+    total_notifications: int
+    notifications: List[Notifications]
+
+
+class RequestResponse(BaseModel):
+    total_requests: int
+    requests: List[RequestOutput]

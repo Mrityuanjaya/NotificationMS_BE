@@ -3,15 +3,26 @@ from dateutil.relativedelta import relativedelta
 from typing import List
 
 import asyncpg.exceptions as postgres_exceptions
+from fastapi import HTTPException, status
 from tortoise import transactions
 from apps.libs import arq
-from apps.modules.notifications import schemas as notification_schema
+from apps.modules.notifications import schemas as notification_schemas
 from apps.modules.notifications import models as notification_models
 from apps.modules.notifications import constants as notification_constants
 from apps.modules.users import schemas as user_schemas
 
 
 class NotificationServices:
+    def start_datetime():
+        starting_time = datetime.datetime.utcnow() - relativedelta(
+            months=int(notification_constants.END_DATE_TIME)
+        )
+        return starting_time
+
+    def end_datetime():
+        ending_time = datetime.datetime.utcnow()
+        return ending_time
+
     async def response(request_list):
         success = 0
         failure = 0
@@ -25,46 +36,64 @@ class NotificationServices:
         output["response"] = request_list
         return output
 
-    async def get_requests_list(
-        application_id: int,
-        current_user: user_schemas.User,
-        start_date: datetime.datetime = datetime.datetime.utcnow()
-        - relativedelta(months=int(notification_constants.END_DATE_TIME)),
-        end_date: datetime.datetime = datetime.datetime.utcnow(),
+    async def get_requests_list_system_admin(
+        start_date: datetime.datetime = start_datetime(),
+        end_date: datetime.datetime = end_datetime(),
     ) -> List[notification_models.RequestReport]:
         """
-        function to get the List of Requests
+        function to get the List of Requests on the basis of Start DateTime and End DateTime
         """
-        if application_id == 0 and current_user.role == 1:
-            request_list = (
-                await notification_schema.Request.filter(
-                    created_at__range=(start_date, end_date)
-                )
-                .order_by("created_at")
-                .all()
-                .values()
-            )
-            return await NotificationServices.response(request_list)
-
-        elif application_id == 0 and current_user.role == 2:
-            application_list = (
-                await user_schemas.Admin.filter(user_id=current_user.id)
-                .all()
-                .prefetch_related("user", "application")
-                .all()
-            )
-            request_list = (
-                await notification_schema.Request.filter(
-                    application_id=application_list[0].id,
-                    created_at__range=(start_date, end_date),
-                )
-                .all()
-                .values()
-            )
-
-            return await NotificationServices.response(request_list)
         request_list = (
-            await notification_schema.Request.filter(
+            await notification_schemas.Request.filter(
+                created_at__range=(start_date, end_date)
+            )
+            .all()
+            .order_by("created_at")
+            .values()
+        )
+
+        return await NotificationServices.response(request_list)
+
+    async def get_requests_list_admin(
+        current_user: user_schemas.User,
+        start_date: datetime.datetime = start_datetime(),
+        end_date: datetime.datetime = end_datetime(),
+    ) -> List[notification_models.RequestReport]:
+        """
+        function to get the List of Requests on the basis of User ID , Start DateTime and End DateTime
+        """
+        application = (
+            await user_schemas.Admin.filter(
+                user_id=current_user.id, status=2, deleted_at=None
+            )
+            .prefetch_related("user", "application")
+            .first()
+        )
+        if application is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Application not found"
+            )
+        request_list = (
+            await notification_schemas.Request.filter(
+                application_id=application.id,
+                created_at__range=(start_date, end_date),
+            )
+            .all()
+            .values()
+        )
+
+        return await NotificationServices.response(request_list)
+
+    async def get_request_list(
+        application_id: int,
+        start_date: datetime.datetime = start_datetime(),
+        end_date: datetime.datetime = end_datetime(),
+    ) -> List[notification_models.RequestReport]:
+        """
+        function to get the List of Requests on the basis of Application ID , Start DateTime and End DateTime
+        """
+        request_list = (
+            await notification_schemas.Request.filter(
                 application_id=application_id, created_at__range=(start_date, end_date)
             )
             .all()
@@ -73,17 +102,17 @@ class NotificationServices:
         return await NotificationServices.response(request_list)
 
     async def update_status(request_id, notification_id):
-        notification = await notification_schema.Notification.filter(
+        notification = await notification_schemas.Notification.filter(
             id=notification_id
         ).first()
         notification.status = 1
         await notification.save()
 
-        for retry in range(0, notification_constants.MAX_RETRY): 
+        for retry in range(0, notification_constants.MAX_RETRY):
             try:
                 async with transactions.in_transaction():
                     request = (
-                        await notification_schema.Request.filter(id=request_id)
+                        await notification_schemas.Request.filter(id=request_id)
                         .select_for_update()
                         .first()
                     )
@@ -129,3 +158,53 @@ class NotificationServices:
                 title,
                 body,
             )
+
+    async def get_limited_notifications_list(
+        request_id, page_no: int = 1, records_per_page: int = 100
+    ):
+        """
+        function to get the list of notifications on the basis of Request Id
+        """
+        notifications = (
+            await notification_schemas.Notification.filter(request_id=request_id)
+            .offset(records_per_page * (page_no - 1))
+            .limit(records_per_page)
+            .order_by("created_at")
+        )
+        total_notifications = await notification_schemas.Notification.filter(
+            request_id=request_id
+        ).count()
+        return {
+            "total_notifications": total_notifications,
+            "notifications": notifications,
+        }
+
+    async def get_request_by_request_id(request_id):
+        """
+        function to get request instance by it's request id
+        """
+        return await notification_schemas.Request.filter(id=request_id).first()
+
+    async def get_requests_by_application_id(
+        application_id: int, page_no: int, records_per_page: int
+    ):
+        """
+        function to return all requests of an application
+        """
+        return (
+            await notification_schemas.Request.filter(application_id=application_id)
+            .offset(records_per_page * (page_no - 1))
+            .limit(records_per_page)
+            .order_by("-created_at")
+        )
+
+    async def get_limited_requests(page_no: int, records_per_page: int):
+        """
+        function to return limited requests
+        """
+        return (
+            await notification_schemas.Request.all()
+            .offset(records_per_page * (page_no - 1))
+            .limit(records_per_page)
+            .order_by("-created_at")
+        )

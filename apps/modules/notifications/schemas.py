@@ -10,7 +10,6 @@ class Request(common_schemas.Base):
         EMAIL_PUSH = 2
         EMAIL = 3
 
-
     id = fields.UUIDField(pk=True)
     application = fields.ForeignKeyField("models.Application", related_name="requests")
     body = fields.JSONField()

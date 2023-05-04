@@ -28,7 +28,9 @@ async def get_recipients(
         total_recipients = response["total_recipients"]
     else:
         admin_id = current_user.id
-        application_ids = await UserServices.get_active_application_ids_by_admin_id(admin_id)
+        application_ids = await UserServices.get_active_application_ids_by_admin_id(
+            admin_id
+        )
         response = await RecipientServices.get_limited_recipients(
             page_no=page_no,
             records_per_page=records_per_page,
@@ -42,7 +44,7 @@ async def get_recipients(
                 "id": recipient_instance.id,
                 "email": recipient_instance.email,
                 "application_name": recipient_instance.application.name,
-                "created_at": recipient_instance.created_at.strftime("%d %B %Y, %I:%M:%S %p"),
+                "created_at": recipient_instance.created_at,
             }
         )
     return {"total_recipients": total_recipients, "recipients": recipients}
@@ -152,7 +154,6 @@ async def upload_recipients(csv_file: UploadFile = File(..., media_type="text/cs
         )
     else:
         return "File Uploaded Successfully"
-    
 
 
 @router.get("/total_recipients")
@@ -160,6 +161,4 @@ async def count_recipients(
     current_user: user_schemas.User = Depends(auth.get_current_user),
     application_id: int = None,
 ):
-    return await RecipientServices.count_recipients(
-        current_user, application_id
-    )
+    return await RecipientServices.count_recipients(current_user, application_id)
