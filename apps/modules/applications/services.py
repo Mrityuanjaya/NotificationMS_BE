@@ -17,6 +17,9 @@ class ApplicationServices:
         """
         function to create Application by System Admin
         """
+        application = await application_schemas.Application.filter(name=application_name).first()
+        if not application:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Application with same name already exists")
         new_application = await application_schemas.Application.create(
             name=application_name.name,
             access_key=common_services.CommonServices.generate_unique_string(

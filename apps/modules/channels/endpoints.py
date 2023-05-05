@@ -17,6 +17,7 @@ router = APIRouter(tags=["channels"])
 
 @router.post("/channel", dependencies=[Depends(auth.is_system_admin)])
 async def create_channel(channel_data: channel_models.ChannelInput):
+    
     channel_data.alias = (channel_data.alias).lower()
     channel = await ChannelServices.get_channel_by_alias(channel_data.alias)
     if channel is not None:
@@ -74,14 +75,25 @@ async def get_channels(
     return {"total_channels": total_channels, "channels": channels}
 
 
-@router.get("/channel/{channel_alias}", dependencies=[Depends(auth.is_system_admin)])
-async def get_channel(channel_alias: str):
+@router.get("/channel/{channel_alias}")
+async def get_channel(
+    channel_alias: str, current_user: user_schemas.User = Depends(auth.get_current_user)
+):
     channel = await ChannelServices.get_channel_by_alias(channel_alias)
     if channel is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=channel_constants.CHANNEL_DOES_NOT_EXIST,
         )
+    if current_user.role == 2:
+        user_id = current_user.id
+        application_id = channel.application_id
+        admin = UserServices.get_admin(user_id=user_id, application_id=application_id)
+        if admin is None:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You are not allowed to view this channel",
+            )
     return {
         "alias": channel.alias,
         "name": channel.name,

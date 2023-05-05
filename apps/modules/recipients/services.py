@@ -30,7 +30,8 @@ class RecipientServices:
                 )
                 .select_related("application")
                 .limit(records_per_page)
-                .offset(records_per_page * (page_no - 1)),
+                .offset(records_per_page * (page_no - 1))
+                .order_by('-created_at'),
             }
         else:
             return {
@@ -38,7 +39,8 @@ class RecipientServices:
                 "recipients": await recipient_schemas.Recipient.all()
                 .select_related("application")
                 .limit(records_per_page)
-                .offset(records_per_page * (page_no - 1)),
+                .offset(records_per_page * (page_no - 1))
+                .order_by('-created_at'),
             }
 
     async def get_all_recipients() -> List[recipient_schemas.Recipient]:

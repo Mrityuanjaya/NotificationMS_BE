@@ -26,21 +26,24 @@ class ChannelServices:
             return {
                 "total_channels": await channel_schemas.Channel.filter(
                     application_id__in=application_ids,
+                    deleted_at__is_null = True
                 ).count(),
                 "channels": await channel_schemas.Channel.filter(
                     application_id__in=application_ids,
                 )
                 .select_related("application")
                 .limit(records_per_page)
-                .offset(records_per_page * (page_no - 1)),
+                .offset(records_per_page * (page_no - 1))
+                .order_by('-created_at')
             }
         else:
             return {
-                "total_channels": await channel_schemas.Channel.all().count(),
-                "channels": await channel_schemas.Channel.all()
+                "total_channels": await channel_schemas.Channel.filter(deleted_at = None).count(),
+                "channels": await channel_schemas.Channel.filter(deleted_at = None)
                 .select_related("application")
                 .limit(records_per_page)
-                .offset(records_per_page * (page_no - 1)),
+                .offset(records_per_page * (page_no - 1))
+                .order_by('-created_at'),
             }
 
     async def get_channel_by_alias(alias: str):

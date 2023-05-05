@@ -172,6 +172,8 @@ async def get_requests(
     current_user: user_schemas.User = Depends(auth.get_current_user),
 ):
     if current_user.role == common_constants.ADMIN_ROLE:
+        if application_id == 0:
+            return
         admin = await user_services.UserServices.get_admin(
             current_user.id, application_id
         )
@@ -179,7 +181,6 @@ async def get_requests(
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized Access"
             )
-
     if current_user.role == common_constants.SYSTEM_ADMIN_ROLE and application_id == 0:
         request_instances = (
             await notification_services.NotificationServices.get_limited_requests(
@@ -222,7 +223,6 @@ async def get_requests(
 @router.get(
     "/notifications",
     status_code=status.HTTP_200_OK,
-    # response_model=notification_models.NotificationsResponse,
 )
 async def get_notifications_list(
     request_id: str,
@@ -270,7 +270,6 @@ async def get_notifications_list(
                 "created_at": notification.created_at,
             }
         )
-        # notification["recipients"] = await recipient_schemas.Recipient.filter(id = notification.recipient_id).values('email')
     return {
         "total_notifications": response["total_notifications"],
         "notifications": notifications,

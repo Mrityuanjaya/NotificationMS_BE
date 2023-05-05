@@ -158,7 +158,7 @@ async def get_user(user_id: int):
 async def get_all_admins(page_no: int = 1, records_per_page: int = 100):
     total_admins = await user_schemas.Admin.all().count()
     admins = (
-        await user_schemas.Admin.all()
+        await user_schemas.Admin.filter(deleted_at = None)
         .limit(records_per_page)
         .offset(records_per_page * (page_no - 1))
         .prefetch_related("user", "application")

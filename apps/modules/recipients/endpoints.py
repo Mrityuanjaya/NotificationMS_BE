@@ -120,6 +120,7 @@ async def upload_recipients(csv_file: UploadFile = File(..., media_type="text/cs
                         }
                     )
                 )
+                
                 token_map[recipient_id] = [{"token": token, "token_type": token_type}]
                 recipients_map[email] = {application_id: recipient_id}
             else:

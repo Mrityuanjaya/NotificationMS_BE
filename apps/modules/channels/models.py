@@ -1,5 +1,6 @@
 from typing import Dict, Union, List
-from pydantic import BaseModel, EmailStr, constr, validator
+from fastapi import HTTPException, status
+from pydantic import BaseModel, EmailStr, ValidationError, constr, validator
 from apps.modules.channels import constants as channel_constants
 
 
@@ -36,7 +37,7 @@ class ChannelInput(BaseModel):
     alias: constr(max_length=255)
     description: constr(max_length=255)
     type: int
-    configuration: EmailConfig | FireBaseConfig
+    configuration: dict
 
     @validator("type")
     def validate_type(cls, value):
@@ -50,10 +51,13 @@ class ChannelInput(BaseModel):
 
     @validator("configuration")
     def validate_configuration(cls, value, values):
-        if values["type"] == channel_constants.EMAIL_CHANNEL_TYPE:
-            value: EmailConfig
-        else:
-            value: FireBaseConfig
+        try: 
+            if values["type"] == channel_constants.EMAIL_CHANNEL_TYPE:
+                EmailConfig(**value)
+            else:
+                FireBaseConfig(**value)
+        except ValidationError as e:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid Configuration")
         return value
 
 

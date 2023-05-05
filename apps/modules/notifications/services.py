@@ -48,7 +48,7 @@ class NotificationServices:
                 created_at__range=(start_date, end_date)
             )
             .all()
-            .order_by("created_at")
+            .order_by("-created_at")
             .values()
         )
 
@@ -169,7 +169,7 @@ class NotificationServices:
             await notification_schemas.Notification.filter(request_id=request_id)
             .offset(records_per_page * (page_no - 1))
             .limit(records_per_page)
-            .order_by("created_at")
+            .order_by("-created_at")
         )
         total_notifications = await notification_schemas.Notification.filter(
             request_id=request_id
