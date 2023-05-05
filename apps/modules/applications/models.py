@@ -14,6 +14,7 @@ class ApplicationOutput(ApplicationInput):
 class Application(ApplicationInput):
     id: int
 
+
 class ApplicationResponse(BaseModel):
     total_applications: int
     applications: List[Application]

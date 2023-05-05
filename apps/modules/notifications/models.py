@@ -4,17 +4,26 @@ from apps.modules.notifications import constants as notification_constants
 from pydantic import BaseModel, EmailStr, validator
 
 
+class TemplateData(BaseModel):
+    email: EmailStr
+    data: Dict[str, Any] = None
+
+
 class NotificationData(BaseModel):
-    recipients: List[EmailStr]
+    recipients: List[TemplateData]
     priority: int
     subject: str
     description: str
     template: str = None
-    template_data: Dict[str, Any] = None
+    common_template_data: Dict[str, Any] = None
 
     @validator("priority")
     def validate_priority(cls, value):
-        if value not in (notification_constants.HIGH_PRIORITY, notification_constants.LOW_PRIORITY, notification_constants.MEDIUM_PRIORITY):
+        if value not in (
+            notification_constants.HIGH_PRIORITY,
+            notification_constants.LOW_PRIORITY,
+            notification_constants.MEDIUM_PRIORITY,
+        ):
             raise ValueError("Invalid Priority")
         return value
 
@@ -35,5 +44,3 @@ class RequestReport(BaseModel):
     total_success: int
     total_failure: int
     request_list: List[RequestOutput]
-
-

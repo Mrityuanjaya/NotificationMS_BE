@@ -55,7 +55,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()) -> user_models
 
 
 @router.post("/invite", dependencies=[Depends(auth.is_system_admin)])
-async def create_admin(request: Request, admin_data: user_models.AdminDataInput):
+async def create_admin(admin_data: user_models.AdminDataInput):
     user = await UserServices.get_user_by_email(admin_data.email)
     application = await UserServices.get_application_by_id(admin_data.application_id)
 
@@ -84,7 +84,7 @@ async def create_admin(request: Request, admin_data: user_models.AdminDataInput)
             hashed_password=hashed_password,
             role=2,
         )
-        subject = "You are now an Admin"
+        subject = "You are Invited to be an Admin"
         body = "Hi {}, here is your password for NotificationMS {}".format(
             admin_data.name, password
         )
@@ -112,7 +112,7 @@ async def create_admin(request: Request, admin_data: user_models.AdminDataInput)
         "application": application.name,
         "invitationCode": invitation_code,
     }
-    body = jinja_setup.find_template(request, "app", "invitation", template_data)
+    body = jinja_setup.get_template("app", "invitation", template_data)
     await arq.redis_pool.enqueue_job(
         "send_invitation", email_conf, admin_data.email, "You are now an Admin", body
     )

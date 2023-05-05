@@ -1,52 +1,65 @@
 from typing import List
 
+from fastapi import Request
 from fastapi_mail import MessageSchema
 from fastapi_mail import ConnectionConfig, FastMail
 from arq import Worker, jobs
 from firebase_admin import messaging
 from tortoise import transactions
-from apps.modules.notifications import services as notification_services, schemas as notification_schemas
 
-async def send_bulk_push_web_notifications_batch(ctx, notification_ids_batch, request_id, token_batch, title, body):
+from apps.modules.jinja import setup as jinja_setup
+from apps.modules.notifications import (
+    services as notification_services,
+    schemas as notification_schemas,
+)
+
+
+async def send_bulk_push_web_notifications_batch(
+    ctx, notification_ids_batch, request_id, token_batch, title, body
+):
     """
     Sends notifications to all the tokens of token_batch with title and body.
 
     Args:
     ctx: context obj that stores information like job_id, jpb_try, enqueue_time, etc
-    notification_ids_batch: a list of at max 500 notification ids used to update notifications status after 
+    notification_ids_batch: a list of at max 500 notification ids used to update notifications status after
                             successfully sending each notifications
     request_id: request id needed to update success and failure count after sending each notification
-    token_batch: list of at max 500 tokens to which we have to send notifications 
+    token_batch: list of at max 500 tokens to which we have to send notifications
     title: title of the notification
     body: body of the notification
 
     Returns:
-    A dictionary containing success and failure count 
+    A dictionary containing success and failure count
     {batch_success_count: , batch_failure_count: }
     """
 
     batch_success_count = 0
     batch_failure_count = 0
     message = messaging.MulticastMessage(
-            notification=messaging.Notification(
-                title=title,
-                body="www.google.com",
-            ),
-            data={
-                "url":"asdfas" 
-            },
-            tokens=token_batch,
-        )
-    response : messaging.BatchResponse = messaging.send_multicast(message)
+        notification=messaging.Notification(
+            title=title,
+            body="www.google.com",
+        ),
+        data={"url": "asdfas"},
+        tokens=token_batch,
+    )
+    response: messaging.BatchResponse = messaging.send_multicast(message)
     updated_notifications = []
     for idx, single_response in enumerate(response.responses):
         if single_response.success:
             batch_success_count += 1
-            updated_notifications.append(notification_schemas.Notification(id=notification_ids_batch[idx], status=1))
+            updated_notifications.append(
+                notification_schemas.Notification(
+                    id=notification_ids_batch[idx], status=1
+                )
+            )
         else:
             batch_failure_count += 1
     if updated_notifications != []:
-        await notification_schemas.Notification.bulk_update(updated_notifications, fields=["status"])
+        await notification_schemas.Notification.bulk_update(
+            updated_notifications, fields=["status"]
+        )
     async with transactions.in_transaction():
         request = (
             await notification_schemas.Request.filter(id=request_id)
@@ -56,10 +69,10 @@ async def send_bulk_push_web_notifications_batch(ctx, notification_ids_batch, re
         request.response["success"] += batch_success_count
         request.response["failure"] -= batch_success_count
         await request.save()
-    return {'batch_success_count': batch_success_count, "batch_failure_count": batch_failure_count}
-
-
-
+    return {
+        "batch_success_count": batch_success_count,
+        "batch_failure_count": batch_failure_count,
+    }
 
 
 async def send_invitation(ctx, email_conf, recipient: str, subject: str, body: str):
@@ -76,10 +89,23 @@ async def send_mail(
     email_conf,
     recipient: str,
     subject: str,
-    body: str,
+    application_name,
+    template_name: str,
+    template_data,
+    common_template_data,
+    description,
     request_id: str,
     notification_id: str,
 ):
+    body: str = ""
+    if template_name != "":
+        body = jinja_setup.get_template(
+            application_name,
+            template_name,
+            {**template_data, **common_template_data},
+        )
+    else:
+        body = description
     config = ConnectionConfig(**email_conf)
     fm = FastMail(config=config)
     message = MessageSchema(
@@ -96,8 +122,8 @@ async def after_end_job(ctx):
         return
     try:
         await job.result()
-        request_id = job_info.args[4]
-        notification_id = job_info.args[5]
+        request_id = job_info.args[8]
+        notification_id = job_info.args[9]
         await notification_services.NotificationServices.update_status(
             request_id, notification_id
         )
@@ -105,4 +131,7 @@ async def after_end_job(ctx):
         pass
 
 
-worker = Worker(functions=[send_mail, send_invitation, send_bulk_push_web_notifications_batch], after_job_end=after_end_job)
+worker = Worker(
+    functions=[send_mail, send_invitation, send_bulk_push_web_notifications_batch],
+    after_job_end=after_end_job,
+)
