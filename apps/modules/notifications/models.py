@@ -5,13 +5,23 @@ from pydantic import BaseModel, EmailStr, validator
 from uuid import UUID
 
 
+class TemplateData(BaseModel):
+    email: EmailStr
+    data: Dict[str, Any] = None
+
+
+class TemplateData(BaseModel):
+    email: EmailStr
+    data: Dict[str, Any] = None
+
+
 class NotificationData(BaseModel):
-    recipients: List[EmailStr]
+    recipients: List[TemplateData]
     priority: int
     subject: str
     description: str
     template: str = None
-    template_data: Dict[str, Any] = None
+    common_template_data: Dict[str, Any] = None
 
     @validator("priority")
     def validate_priority(cls, value):

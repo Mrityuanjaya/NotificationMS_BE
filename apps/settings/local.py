@@ -6,6 +6,7 @@ load_dotenv()
 
 
 class settings:
+    URL = "http://127.0.0.1:8000/"
     SECRET_KEY = os.environ["SECRET_KEY"]
     ALGORITHM = os.environ["ALGORITHM"]
 
@@ -49,4 +50,6 @@ class settings:
     )
     SEND_MAIL = FastMail(Mail_CONFIG)
 
-    FIREBASE_ADMIN_SERVICE_ACCOUNT_CREDENTIALS=os.environ["FIREBASE_ADMIN_SERVICE_ACCOUNT_CREDENTIALS"]
+    FIREBASE_ADMIN_SERVICE_ACCOUNT_CREDENTIALS = os.environ[
+        "FIREBASE_ADMIN_SERVICE_ACCOUNT_CREDENTIALS"
+    ]

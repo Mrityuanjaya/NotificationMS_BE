@@ -1,10 +1,13 @@
 from typing import List
 
+from fastapi import Request
 from fastapi_mail import MessageSchema
 from fastapi_mail import ConnectionConfig, FastMail
 from arq import Worker, jobs
 from firebase_admin import messaging
 from tortoise import transactions
+
+from apps.modules.jinja import setup as jinja_setup
 from apps.modules.notifications import (
     services as notification_services,
     schemas as notification_schemas,
@@ -81,10 +84,23 @@ async def send_mail(
     email_conf,
     recipient: str,
     subject: str,
-    body: str,
+    application_name,
+    template_name: str,
+    template_data,
+    common_template_data,
+    description,
     request_id: str,
     notification_id: str,
 ):
+    body: str = ""
+    if template_name != "":
+        body = jinja_setup.get_template(
+            application_name,
+            template_name,
+            {**template_data, **common_template_data},
+        )
+    else:
+        body = description
     config = ConnectionConfig(**email_conf)
     fm = FastMail(config=config)
     message = MessageSchema(
@@ -101,8 +117,8 @@ async def after_end_job(ctx):
         return
     try:
         await job.result()
-        request_id = job_info.args[4]
-        notification_id = job_info.args[5]
+        request_id = job_info.args[8]
+        notification_id = job_info.args[9]
         await notification_services.NotificationServices.update_status(
             request_id, notification_id
         )

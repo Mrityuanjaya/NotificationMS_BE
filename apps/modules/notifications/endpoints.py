@@ -27,7 +27,6 @@ router = APIRouter(tags=["notifications"])
 
 @router.post("/send_notifications", status_code=status.HTTP_201_CREATED)
 async def send_notifications(
-    request: Request,
     access_key: Annotated[str, Header()],
     notification_data: notification_models.NotificationData,
 ):
@@ -40,37 +39,38 @@ async def send_notifications(
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Invalid Access Key"
         )
-
+    recipients_emails = []
+    for recipient in notification_data.recipients:
+        recipients_emails.append(recipient.email)
     recipients = await recipients_services.RecipientServices.get_recipients_by_emails(
-        notification_data.recipients, application_id=application.id
+        recipients_emails, application_id=application.id
     )
     devices = await recipients_services.RecipientServices.get_devices_by_recipient_instances_and_priority(
         recipients, notification_data.priority
     )
-    body: str = ""
+
     template_name = notification_data.template if notification_data.template else ""
-    template_data = (
-        notification_data.template_data if notification_data.template_data else {}
+    common_template_data = (
+        notification_data.common_template_data
+        if notification_data.common_template_data
+        else {}
     )
+
     if template_name != "":
         try:
-            body = jinja_setup.find_template(
-                request, application.name, template_name, template_data
-            )
+            jinja_setup.find_template(application.name, template_name)
         except:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Template not found"
             )
-    else:
-        body = notification_data.description
     body_data = {
         "subject": notification_data.subject,
         "description": notification_data.description,
         "template": template_name,
-        "template_data": template_data,
+        "template_data": common_template_data,
     }
     response = {"success": 0, "failure": len(recipients) + len(devices)}
-    request = await notification_schemas.Request.create(
+    notification_request = await notification_schemas.Request.create(
         application_id=application.id,
         body=body_data,
         total_recipients=len(recipients) + len(devices),
@@ -85,7 +85,7 @@ async def send_notifications(
         notifications.append(
             notification_schemas.Notification(
                 id=notification_id,
-                request_id=request.id,
+                request_id=notification_request.id,
                 recipient_id=recipients[i].id,
                 status=0,
                 type=1,
@@ -101,7 +101,7 @@ async def send_notifications(
         notifications.append(
             notification_schemas.Notification(
                 id=notification_id,
-                request_id=request.id,
+                request_id=notification_request.id,
                 recipient_id=device.recipient_id,
                 status=0,
                 type=(2 if device.token_type == 1 else 3),
@@ -109,7 +109,7 @@ async def send_notifications(
         )
     await notification_schemas.Notification.bulk_create(notifications)
     await notification_services.NotificationServices.send_bulk_push_web_notification(
-        request_id=request.id,
+        request_id=notification_request.id,
         tokens=tokens,
         title=notification_data.subject,
         body=notification_data.description,
@@ -123,15 +123,19 @@ async def send_notifications(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Email Configuration Not Found",
         )
-    for i in range(len(recipients)):
+    for recipient in notification_data.recipients:
         await arq.redis_pool.enqueue_job(
             "send_mail",
             email_conf["configuration"],
             recipients[i].email,
             notification_data.subject,
-            body,
-            request.id,
-            email_notification_ids[i],
+            application.name,
+            template_name,
+            recipient.data,
+            common_template_data,
+            notification_data.description,
+            notification_request.id,
+            notification_id,
         )
     return {"sending notifications"}
 
