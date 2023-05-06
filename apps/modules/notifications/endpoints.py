@@ -127,7 +127,7 @@ async def send_notifications(
         await arq.redis_pool.enqueue_job(
             "send_mail",
             email_conf["configuration"],
-            recipients[i].email,
+            recipient.email,
             notification_data.subject,
             application.name,
             template_name,

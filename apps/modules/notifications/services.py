@@ -48,6 +48,7 @@ class NotificationServices:
                 created_at__range=(start_date, end_date)
             )
             .all()
+            .order_by("created_at")
             .values()
         )
         return await NotificationServices.response(request_list)
@@ -65,6 +66,7 @@ class NotificationServices:
                 user_id=current_user.id, status=2, deleted_at=None
             )
             .prefetch_related("user", "application")
+            .order_by("created_at")
             .first()
         )
         if application is None:
@@ -95,6 +97,7 @@ class NotificationServices:
                 application_id=application_id, created_at__range=(start_date, end_date)
             )
             .all()
+            .order_by("created_at")
             .values()
         )
         return await NotificationServices.response(request_list)
