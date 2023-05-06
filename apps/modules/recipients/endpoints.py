@@ -50,7 +50,7 @@ async def get_recipients(
     return {"total_recipients": total_recipients, "recipients": recipients}
 
 
-@router.post("/upload/recipients", dependencies=[Depends(auth.is_system_admin)])
+@router.post("/upload/recipients", dependencies=[Depends(auth.is_system_admin)], status_code=status.HTTP_201_CREATED)
 async def upload_recipients(csv_file: UploadFile = File(..., media_type="text/csv")):
     failed_count = 0
     records = await CommonServices.get_records_from_csv(csv_file=csv_file)
@@ -61,7 +61,8 @@ async def upload_recipients(csv_file: UploadFile = File(..., media_type="text/cs
     # recipients_map =
     # {
     #   "jai@example.com": {
-    #     "1": "4f283cc9-39dc-44d4-9ea2-09048df82b29"
+    #     "1": "4f283cc9-39dc-44d4-9ea2-09048df82b29",
+    #     "2": "recipient_id2313"
     #   },
     #   "mrityuanjaya.gupta@joshtechnologygroup.com": {
     #     "1": "9c228f98-0125-4df0-b551-c198e96560b7"
@@ -88,9 +89,9 @@ async def upload_recipients(csv_file: UploadFile = File(..., media_type="text/cs
     #   }
     token_map = {}
     for existing_recipient in existing_recipients:
-        recipients_map[existing_recipient.email] = {
-            existing_recipient.application.id: existing_recipient.id
-        }
+        if recipients_map.get(existing_recipient.email) is None:
+            recipients_map[existing_recipient.email] = {}
+        recipients_map[existing_recipient.email][existing_recipient.application.id] = existing_recipient.id
     for record in records:
         record_dict = {
             "application_id": record[0],

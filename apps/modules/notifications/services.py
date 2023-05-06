@@ -1,7 +1,7 @@
 import asyncio, datetime
 from dateutil.relativedelta import relativedelta
 from typing import List
-
+import time
 import asyncpg.exceptions as postgres_exceptions
 from fastapi import HTTPException, status
 from tortoise import transactions
@@ -48,10 +48,8 @@ class NotificationServices:
                 created_at__range=(start_date, end_date)
             )
             .all()
-            .order_by("-created_at")
             .values()
         )
-
         return await NotificationServices.response(request_list)
 
     async def get_requests_list_admin(

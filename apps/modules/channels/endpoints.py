@@ -15,7 +15,7 @@ from apps.modules.users.services import UserServices
 router = APIRouter(tags=["channels"])
 
 
-@router.post("/channel", dependencies=[Depends(auth.is_system_admin)])
+@router.post("/channel", dependencies=[Depends(auth.is_system_admin)], status_code=status.HTTP_201_CREATED)
 async def create_channel(channel_data: channel_models.ChannelInput):
     
     channel_data.alias = (channel_data.alias).lower()

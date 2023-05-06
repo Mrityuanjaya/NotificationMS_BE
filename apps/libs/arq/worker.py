@@ -36,9 +36,8 @@ async def send_bulk_push_web_notifications_batch(
     message = messaging.MulticastMessage(
         notification=messaging.Notification(
             title=title,
-            body="www.google.com",
+            body=body,
         ),
-        data={"url": "asdfas"},
         tokens=token_batch,
     )
     response: messaging.BatchResponse = messaging.send_multicast(message)

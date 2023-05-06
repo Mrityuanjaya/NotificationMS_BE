@@ -25,7 +25,7 @@ from apps.modules.channels import services as channel_services
 router = APIRouter(tags=["notifications"])
 
 
-@router.post("/send_notifications")
+@router.post("/send_notifications", status_code=status.HTTP_201_CREATED)
 async def send_notifications(
     request: Request,
     access_key: Annotated[str, Header()],
@@ -47,7 +47,6 @@ async def send_notifications(
     devices = await recipients_services.RecipientServices.get_devices_by_recipient_instances_and_priority(
         recipients, notification_data.priority
     )
-
     body: str = ""
     template_name = notification_data.template if notification_data.template else ""
     template_data = (
@@ -143,9 +142,9 @@ async def send_notifications(
 )
 async def get_requests_list(
     application_id: int,
-    start_date: datetime.datetime = datetime.datetime.utcnow()
+    start_date: datetime.datetime = datetime.datetime.now(datetime.timezone.utc).astimezone()
     - relativedelta(months=int(notification_constants.END_DATE_TIME)),
-    end_date: datetime.datetime = datetime.datetime.utcnow(),
+    end_date: datetime.datetime = datetime.datetime.now(datetime.timezone.utc).astimezone(),
     current_user: user_schemas.User = Depends(auth.get_current_user),
 ):
     """
@@ -253,7 +252,6 @@ async def get_notifications_list(
             request_id, page_no, records_per_page
         )
     )
-    # return response
     notifications = []
     for notification in response["notifications"]:
         recipient_email = (

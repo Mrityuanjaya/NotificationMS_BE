@@ -54,7 +54,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()) -> user_models
     }
 
 
-@router.post("/invite", dependencies=[Depends(auth.is_system_admin)])
+@router.post("/invite", dependencies=[Depends(auth.is_system_admin)], status_code=status.HTTP_201_CREATED)
 async def create_admin(request: Request, admin_data: user_models.AdminDataInput):
     user = await UserServices.get_user_by_email(admin_data.email)
     application = await UserServices.get_application_by_id(admin_data.application_id)
