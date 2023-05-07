@@ -114,7 +114,7 @@ async def create_admin(admin_data: user_models.AdminDataInput):
     }
     body = jinja_setup.get_template("app", "invitation", template_data)
     await arq.redis_pool.enqueue_job(
-        "send_invitation", email_conf, admin_data.email, "You are now an Admin", body
+        "send_invitation", email_conf, admin_data.email, "You are invited to be an admin", body
     )
     return {"Admin Created Successfully"}
 
