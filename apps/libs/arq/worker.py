@@ -70,7 +70,7 @@ async def send_bulk_push_web_notifications_batch(
     }
 
 
-async def send_invitation(ctx, email_conf, recipient: str, subject: str, body: str):
+async def send_system_mail(ctx, email_conf, recipient: str, subject: str, body: str):
     config = ConnectionConfig(**email_conf)
     fm = FastMail(config=config)
     message = MessageSchema(
@@ -127,6 +127,6 @@ async def after_end_job(ctx):
 
 
 worker = Worker(
-    functions=[send_mail, send_invitation, send_bulk_push_web_notifications_batch],
+    functions=[send_mail, send_system_mail, send_bulk_push_web_notifications_batch],
     after_job_end=after_end_job,
 )

@@ -151,7 +151,7 @@ class NotificationServices:
         ]
         total_no_of_batches = len(token_batches)
         for i in range(total_no_of_batches):
-            await arq.redis_pool.enqueue_job(
+            await arq.broker.enqueue_job(
                 "send_bulk_push_web_notifications_batch",
                 notification_ids_batches[i],
                 request_id,
