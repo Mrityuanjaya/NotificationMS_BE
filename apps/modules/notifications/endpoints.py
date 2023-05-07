@@ -123,7 +123,7 @@ async def send_notifications(
             detail="Email Configuration Not Found",
         )
     for recipient in notification_data.recipients:
-        await arq.redis_pool.enqueue_job(
+        await arq.broker.enqueue_job(
             "send_mail",
             email_conf["configuration"],
             recipient.email,

@@ -79,7 +79,7 @@ class NotificationServices:
         notification.status = 1
         await notification.save()
 
-        for retry in range(0, notification_constants.MAX_RETRY): 
+        for retry in range(0, notification_constants.MAX_RETRY):
             try:
                 async with transactions.in_transaction():
                     request = (
@@ -121,7 +121,7 @@ class NotificationServices:
         ]
         total_no_of_batches = len(token_batches)
         for i in range(total_no_of_batches):
-            await arq.redis_pool.enqueue_job(
+            await arq.broker.enqueue_job(
                 "send_bulk_push_web_notifications_batch",
                 notification_ids_batches[i],
                 request_id,

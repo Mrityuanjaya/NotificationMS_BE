@@ -1,7 +1,7 @@
 from typing import List
 from datetime import datetime, timedelta
 
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 
 from apps.modules.users.services import UserServices
@@ -11,7 +11,11 @@ from apps.modules.users import (
     schemas as user_schemas,
 )
 from apps.modules.channels import services as channel_services
-from apps.modules.common import auth, services as common_services
+from apps.modules.common import (
+    auth,
+    services as common_services,
+    constants as common_constants,
+)
 from apps.modules.jinja import setup as jinja_setup
 from apps.libs import arq
 
@@ -88,8 +92,8 @@ async def create_admin(admin_data: user_models.AdminDataInput):
         body = "Hi {}, here is your password for NotificationMS {}".format(
             admin_data.name, password
         )
-        await arq.redis_pool.enqueue_job(
-            "send_invitation", email_conf, admin_data.email, subject, body
+        await arq.broker.enqueue_job(
+            "send_system_mail", email_conf, admin_data.email, subject, body
         )
 
     admin = await UserServices.get_admin(user.id, admin_data.application_id)
@@ -113,8 +117,8 @@ async def create_admin(admin_data: user_models.AdminDataInput):
         "invitationCode": invitation_code,
     }
     body = jinja_setup.get_template("app", "invitation", template_data)
-    await arq.redis_pool.enqueue_job(
-        "send_invitation", email_conf, admin_data.email, "You are now an Admin", body
+    await arq.broker.enqueue_job(
+        "send_system_mail", email_conf, admin_data.email, "You are now an Admin", body
     )
     return {"Admin Created Successfully"}
 
@@ -199,6 +203,29 @@ async def update_admin_detail(user_id: int, admin_data: user_models.UserDataOutp
     user.email = admin_data.email
     user.role = admin_data.role
     await user.save()
+
+    system_channel = await channel_services.ChannelServices.get_active_channel_by_alias(
+        "system channel"
+    )
+    if system_channel is None:
+        raise HTTPException(
+            status_code=404,
+            detail=user_constants.ERROR_MESSAGES["CHANNEL_NOT_EXIST"],
+        )
+    email_conf = system_channel.configuration
+
+    subject = "Details updated"
+    body = "Hey {}, your Details have been updated<br> here are your new details<br>Name: {}<br>Email: {}<br>Role: {}".format(
+        admin_data.name,
+        admin_data.name,
+        admin_data.email,
+        user_constants.SYSTEM_ADMIN
+        if user.role == common_constants.SYSTEM_ADMIN_ROLE
+        else user_constants.ADMIN,
+    )
+    await arq.broker.enqueue_job(
+        "send_system_mail", email_conf, admin_data.email, subject, body
+    )
     return {"User updated Successfully"}
 
 
