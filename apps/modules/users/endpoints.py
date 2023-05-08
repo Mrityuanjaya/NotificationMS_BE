@@ -117,7 +117,7 @@ async def create_admin(admin_data: user_models.AdminDataInput):
         "invitationCode": invitation_code,
     }
     body = jinja_setup.get_template("app", "invitation", template_data)
-    await arq.redis_pool.enqueue_job(
+    await arq.broker.enqueue_job(
         "send_invitation", email_conf, admin_data.email, "You are invited to be an admin", body
     )
     return {"Admin Created Successfully"}
@@ -166,7 +166,7 @@ async def get_all_admins(page_no: int = 1, records_per_page: int = 100):
         .limit(records_per_page)
         .offset(records_per_page * (page_no - 1))
         .prefetch_related("user", "application")
-        .order_by("user__name")
+        .order_by("-created_at")
     )
     admin_data = []
     for admin in admins:
