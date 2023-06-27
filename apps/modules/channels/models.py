@@ -39,16 +39,6 @@ class ChannelInput(BaseModel):
     type: int
     configuration: dict
 
-    @validator("type")
-    def validate_type(cls, value):
-        if value not in (
-            channel_constants.EMAIL_CHANNEL_TYPE,
-            channel_constants.PUSH_CHANNEL_TYPE,
-            channel_constants.WEB_CHANNEL_TYPE,
-        ):
-            raise ValueError("Invalid Channel Type")
-        return value
-
     @validator("configuration")
     def validate_configuration(cls, value, values):
         try: 

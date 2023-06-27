@@ -55,7 +55,7 @@ async def get_current_user(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=common_constants.ERROR_MESSAGES["INVALID_CREDENTIALS"],
         )
-    user = await user_schemas.User.filter(email=email).first()
+    user = await user_schemas.User.filter(email=email).first()          #Check existence of email
     return user
 
 
@@ -63,7 +63,7 @@ async def is_system_admin(current_user: user_schemas.User = Depends(get_current_
     """
     function check if the current user is System Admin or not
     """
-    if current_user.role != 1:
+    if current_user.role != common_constants.SYSTEM_ADMIN_ROLE:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=common_constants.ERROR_MESSAGES["FORBIDDEN_USER"],

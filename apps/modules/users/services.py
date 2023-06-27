@@ -11,6 +11,7 @@ class UserServices:
         return UserServices.pwd_context.verify(plain_password, hashed_password)
 
     def get_password_hash(password):
+        print(UserServices.pwd_context.hash(password))
         return UserServices.pwd_context.hash(password)
 
     async def get_user_by_email(email) -> user_schemas.User:
@@ -27,7 +28,7 @@ class UserServices:
 
     async def get_admin(user_id: int, application_id: int) -> user_schemas.Admin:
         admin = await user_schemas.Admin.filter(
-            user_id=user_id, application_id=application_id
+            user_id=user_id, application_id=application_id, deleted_at=None
         ).first()
         return admin
 
@@ -40,8 +41,12 @@ class UserServices:
         return True
 
     async def get_active_application_ids_by_admin_id(admin_id: int):
-        admin_instances = await user_schemas.Admin.filter(user_id=admin_id, deleted_at__isnull=True).order_by('created_at').values("application_id")
-        application_ids = []
+        admin_instances = (
+            await user_schemas.Admin.filter(user_id=admin_id, deleted_at__isnull=True)
+            .order_by("created_at")
+            .values("application_id")
+        )                   # valuesList
+        application_ids = []  # List Comprehension
         for admin_instance in admin_instances:
             application_ids.append(admin_instance["application_id"])
         return application_ids

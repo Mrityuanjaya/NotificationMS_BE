@@ -123,7 +123,8 @@ async def send_notifications(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Channel Not Found",
         )
-    for recipient in notification_data.recipients:
+    for i in range(len(notification_data.recipients)):
+        recipient = notification_data.recipients[i]
         await arq.broker.enqueue_job(
             "send_mail",
             email_conf["configuration"],
@@ -135,7 +136,7 @@ async def send_notifications(
             common_template_data,
             notification_data.description,
             notification_request.id,
-            notification_id,
+            email_notification_ids[i],
         )
     return {"sending notifications"}
 
@@ -157,7 +158,6 @@ async def get_requests_list(
         start_date = datetime.datetime.now(datetime.timezone.utc).astimezone()-relativedelta(months=int(notification_constants.END_DATE_TIME))
     if end_date == None:
         end_date = datetime.datetime.now(datetime.timezone.utc).astimezone()
-    print(start_date, " ", end_date)
     if application_id == 0 and current_user.role == 1:
         return await notification_services.NotificationServices.get_requests_list_system_admin(
             start_date, end_date
@@ -179,8 +179,6 @@ async def get_requests(
     current_user: user_schemas.User = Depends(auth.get_current_user),
 ):
     if current_user.role == common_constants.ADMIN_ROLE:
-        if application_id == 0:
-            return
         admin = await user_services.UserServices.get_admin(
             current_user.id, application_id
         )

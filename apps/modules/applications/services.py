@@ -7,7 +7,7 @@ from apps.modules.applications import (
 from apps.modules.applications import constants as application_constants
 from apps.modules.common.services import CommonServices
 from apps.modules.users import schemas as user_schemas
-from apps.modules.common import services as common_services
+from apps.modules.common import services as common_services, constants as common_constants
 
 
 class ApplicationServices:
@@ -50,7 +50,7 @@ class ApplicationServices:
     async def get_limited_active_application_list(
         current_user, page_no: int, records_per_page: int
     ):
-        if current_user.role == 2:
+        if current_user.role == common_constants.ADMIN_ROLE:
             application_list = (
                 await user_schemas.Admin.filter(
                     user_id=current_user.id, status=2, deleted_at=None
@@ -95,3 +95,6 @@ class ApplicationServices:
         return await application_schemas.Application.filter(
             access_key=access_key
         ).first()
+
+    async def get_application_by_name(name: str):
+        return await application_schemas.Application.filter(name=name).first()

@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from fastapi import status, Depends
 
 from apps.modules.common import auth
@@ -21,6 +21,8 @@ router = APIRouter(tags=["applications"])
 async def create_application(
     application_name: application_models.ApplicationInput,
 ):
+    if await application_services.ApplicationServices.get_application_by_name(application_name) is not None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Application with same name already exists")
     return await application_services.ApplicationServices.create_application(
         application_name
     )

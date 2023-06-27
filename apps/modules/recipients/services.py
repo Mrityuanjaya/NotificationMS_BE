@@ -11,6 +11,7 @@ from apps.modules.applications import (
 from apps.modules.users import schemas as user_schemas
 from apps.modules.recipients import schemas as recipient_schemas
 from apps.modules.notifications import constants as notification_constants
+from apps.modules.common import constants as common_constants
 
 
 class RecipientServices:
@@ -126,13 +127,13 @@ class RecipientServices:
         current_user: user_schemas.User, application_id: int = None
     ):
         """
-        function to return count of recipients in perticular application
+        function to return count of recipients in particular application
         """
-        if application_id == 0 and current_user.role == 1:
+        if application_id == 0 and current_user.role == common_constants.SYSTEM_ADMIN_ROLE:
             count = await recipient_schemas.Recipient.all().count()
             return count
 
-        elif application_id == 0 and current_user.role == 2:
+        elif application_id == 0 and current_user.role == common_constants.ADMIN_ROLE:
             application_list = (
                 await user_schemas.Admin.filter(
                     user_id=current_user.id, status=2, deleted_at=None

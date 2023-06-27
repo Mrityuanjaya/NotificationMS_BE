@@ -23,12 +23,13 @@ class NotificationServices:
         ending_time = datetime.datetime.utcnow()
         return ending_time
 
-    async def response(request_list):
+    def response(request_list):
         success = 0
         failure = 0
         for i in request_list:
-            success += i["response"]["success"]
-            failure += i["response"]["failure"]
+            print("i = ", i.response)
+            success += i.response["success"]
+            failure += i.response["failure"]
 
         output = {}
         output["total_success"] = success
@@ -47,11 +48,9 @@ class NotificationServices:
             await notification_schemas.Request.filter(
                 created_at__range=(start_date, end_date)
             )
-            .all()
             .order_by("created_at")
-            .values()
         )
-        return await NotificationServices.response(request_list)
+        return NotificationServices.response(request_list)
 
     async def get_requests_list_admin(
         current_user: user_schemas.User,
@@ -78,8 +77,6 @@ class NotificationServices:
                 application_id=application.id,
                 created_at__range=(start_date, end_date),
             )
-            .all()
-            .values()
         )
 
         return await NotificationServices.response(request_list)
@@ -96,9 +93,7 @@ class NotificationServices:
             await notification_schemas.Request.filter(
                 application_id=application_id, created_at__range=(start_date, end_date)
             )
-            .all()
             .order_by("created_at")
-            .values()
         )
         return await NotificationServices.response(request_list)
 

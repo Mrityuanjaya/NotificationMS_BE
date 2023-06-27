@@ -22,6 +22,11 @@ from apps.libs import arq
 router = APIRouter(tags=["users"])
 
 
+@router.post('/get_hashed_password')
+async def get_hashed_password(password: str):
+    return UserServices.get_password_hash(password)
+
+
 @router.post("/login", response_model=user_models.Login)
 async def login(form_data: OAuth2PasswordRequestForm = Depends()) -> user_models.Login:
     try:
@@ -118,7 +123,7 @@ async def create_admin(admin_data: user_models.AdminDataInput):
     }
     body = jinja_setup.get_template("app", "invitation", template_data)
     await arq.broker.enqueue_job(
-        "send_invitation", email_conf, admin_data.email, "You are invited to be an admin", body
+        "send_system_mail", email_conf, admin_data.email, "You are invited to be an admin", body
     )
     return {"Admin Created Successfully"}
 
@@ -231,7 +236,6 @@ async def update_admin_detail(user_id: int, admin_data: user_models.UserDataOutp
 
 @router.delete(
     "/user/{user_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
     dependencies=[Depends(auth.is_system_admin)],
 )
 async def delete_admin(user_id: int, application_id: int):
@@ -242,13 +246,13 @@ async def delete_admin(user_id: int, application_id: int):
         )
     admin.deleted_at = datetime.utcnow()
     await admin.save()
-    return {"admin deleted successfully"}
+    return "Admin deleted successfully"
 
 
 @router.get("/validate_user")
 async def validate_user(current_user: bool = Depends(auth.get_current_user)):
     if current_user == None:
         return {"loginStatus": False, "systemAdminStatus": False}
-    if current_user.role == 1:
+    if current_user.role == common_constants.SYSTEM_ADMIN_ROLE:
         return {"loginStatus": True, "systemAdminStatus": True}
     return {"loginStatus": True, "systemAdminStatus": False}

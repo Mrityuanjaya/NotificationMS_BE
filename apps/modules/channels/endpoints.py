@@ -1,6 +1,7 @@
 from tortoise import timezone
 from pydantic import ValidationError
 from fastapi import APIRouter, Depends, HTTPException, status
+
 from apps.modules.channels.services import ChannelServices
 from apps.modules.common import auth, constants as common_constants
 from apps.modules.applications.services import ApplicationServices
@@ -85,7 +86,7 @@ async def get_channel(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=channel_constants.CHANNEL_DOES_NOT_EXIST,
         )
-    if current_user.role == 2:
+    if current_user.role == common_constants.ADMIN_ROLE:
         user_id = current_user.id
         application_id = channel.application_id
         admin = UserServices.get_admin(user_id=user_id, application_id=application_id)

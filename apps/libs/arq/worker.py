@@ -113,12 +113,14 @@ async def after_end_job(ctx):
     id = ctx["job_id"]
     job = jobs.Job(id, ctx["redis"])
     job_info = await job.info()
+    print("function = ", job_info.function)
     if job_info.function != "send_mail":
         return
     try:
         await job.result()
         request_id = job_info.args[8]
         notification_id = job_info.args[9]
+        print(request_id, "   ", notification_id)
         await notification_services.NotificationServices.update_status(
             request_id, notification_id
         )
